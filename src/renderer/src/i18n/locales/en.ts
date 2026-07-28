@@ -8,7 +8,7 @@ const en = {
   earthquake: earthquakeEn,
   app: {
     name: 'Earthquake Signal',
-    tagline: 'A secure desktop workspace.',
+    tagline: 'Real-time earthquake signals.',
   },
   common: {
     loading: 'Loading...',

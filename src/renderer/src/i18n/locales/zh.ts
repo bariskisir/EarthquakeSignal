@@ -8,7 +8,7 @@ const zh = {
   earthquake: earthquakeEn,
   app: {
     name: 'Earthquake Signal',
-    tagline: 'A secure desktop workspace.',
+    tagline: '实时地震信号。',
   },
   common: {
     loading: '加载中…',

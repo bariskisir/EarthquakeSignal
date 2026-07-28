@@ -89,8 +89,14 @@ export interface EarthquakeEvent {
   depthKm?: number | undefined
   place?: string | undefined
   revision?: number | undefined
+  sourceIntensity?: number | undefined
   estimatedIntensity?: number | undefined
+  waveSpeedKmPerSecond?: number | undefined
+  alertDelaySeconds?: number | undefined
   distanceKm?: number | undefined
+  magnitudeRange?: number | undefined
+  reportCount?: number | undefined
+  providerData?: string | undefined
   warning?: string | undefined
 }
 
@@ -130,6 +136,10 @@ export interface EarthquakeServiceStatus {
   subscribedTopics: string[]
   token?: string
   backendUserId?: string
+  backendRegistered?: boolean
+  tileRegistered?: boolean
+  locationSynchronized?: boolean
+  topicMembershipConfirmed?: boolean
   firebaseInstallationId?: string
   gcmAndroidId?: string
   gcmAppId?: string

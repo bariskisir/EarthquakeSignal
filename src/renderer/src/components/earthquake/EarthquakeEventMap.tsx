@@ -39,12 +39,19 @@ const EarthquakeEventMap = ({
     earthquake.latitude,
     earthquake.longitude,
   )
-  const eventTimestamp = Date.parse(earthquake.occurredAt ?? earthquake.receivedAt)
+  const eventTimestamp = Date.parse(earthquake.receivedAt)
+  const waveSpeedKmPerSecond = earthquake.waveSpeedKmPerSecond
+  const alertDelaySeconds = earthquake.alertDelaySeconds ?? 0
   const elapsedSeconds = Number.isNaN(eventTimestamp)
     ? 0
     : Math.max(0, (Date.now() - eventTimestamp) / 1_000)
   const [waveState, setWaveState] = useState<EarthquakeWaveState>(() =>
-    calculateEarthquakeWaveState(distanceKm, elapsedSeconds),
+    calculateEarthquakeWaveState(
+      distanceKm,
+      elapsedSeconds,
+      waveSpeedKmPerSecond,
+      alertDelaySeconds,
+    ),
   )
 
   useEffect(() => {
@@ -67,6 +74,8 @@ const EarthquakeEventMap = ({
       const initialWave = calculateEarthquakeWaveState(
         distanceKm,
         Number.isNaN(eventTimestamp) ? 0 : Math.max(0, (Date.now() - eventTimestamp) / 1_000),
+        waveSpeedKmPerSecond,
+        alertDelaySeconds,
       )
       waveCircleRef.current = L.circle(eventLocation, {
         radius: initialWave.radiusKm * 1_000,
@@ -143,6 +152,7 @@ const EarthquakeEventMap = ({
     }
   }, [
     distanceKm,
+    alertDelaySeconds,
     earthquake.kind,
     earthquake.latitude,
     earthquake.longitude,
@@ -153,6 +163,7 @@ const EarthquakeEventMap = ({
     theme,
     userLatitude,
     userLongitude,
+    waveSpeedKmPerSecond,
   ])
 
   useEffect(() => {
@@ -160,7 +171,12 @@ const EarthquakeEventMap = ({
     const startedAt = Number.isNaN(eventTimestamp) ? Date.now() : eventTimestamp
     const updateWave = (): void => {
       const elapsed = Math.max(0, (Date.now() - startedAt) / 1_000)
-      const next = calculateEarthquakeWaveState(distanceKm, elapsed)
+      const next = calculateEarthquakeWaveState(
+        distanceKm,
+        elapsed,
+        waveSpeedKmPerSecond,
+        alertDelaySeconds,
+      )
       waveCircleRef.current?.setRadius(next.radiusKm * 1_000)
       setWaveState((current) =>
         current.radiusKm === next.radiusKm && current.remainingSeconds === next.remainingSeconds
@@ -171,7 +187,14 @@ const EarthquakeEventMap = ({
     updateWave()
     const timer = window.setInterval(updateWave, 100)
     return () => window.clearInterval(timer)
-  }, [distanceKm, earthquake.kind, eventTimestamp, showWave])
+  }, [
+    alertDelaySeconds,
+    distanceKm,
+    earthquake.kind,
+    eventTimestamp,
+    showWave,
+    waveSpeedKmPerSecond,
+  ])
 
   return (
     <div className={`${styles.shell} ${mode === 'fullscreen' ? styles.fullscreen : ''}`}>

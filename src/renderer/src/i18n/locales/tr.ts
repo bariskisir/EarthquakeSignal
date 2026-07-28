@@ -8,7 +8,7 @@ const tr = {
   earthquake: earthquakeTr,
   app: {
     name: 'Earthquake Signal',
-    tagline: 'Güvenli bir masaüstü çalışma alanı.',
+    tagline: 'Gerçek zamanlı deprem sinyalleri.',
   },
   common: {
     loading: 'Yükleniyor...',

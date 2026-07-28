@@ -161,9 +161,11 @@ Application startup
   -> StorageService loads settings and earthquake history
   -> EarthquakeService starts/reuses FCM registration
   -> token is registered with Earthquake Network backend
+  -> fixed location and 10-degree tile metadata are synchronized
+  -> Firebase installation subscribes to global and the fixed-location topic
   -> receiver maintains an MCS connection
   <- raw FCM envelope arrives and is logged
-  <- EarthquakeService normalizes realtime/seismic payload aliases
+  <- EarthquakePayloadParser normalizes realtime/seismic payload aliases
   -> StorageService upserts one earthquake session
   -> notification policy selects none/normal/fullscreen and alarm state
   -> event:earthquake-received crosses preload
@@ -185,9 +187,8 @@ Earthquake Network Android APK:
 - Sender ID: `899482329945`
 
 Native Electron on Windows cannot run the Android Firebase SDK. The project therefore uses
-`@eneris/push-receiver`, which creates a Chromium/WebPush-compatible GCM subtype. Its local GCM app
-ID intentionally begins with `wp:`, while its bundle ID is the APK package. Do not remove the `wp:`
-protocol behavior or claim that the receiver is a native Android client.
+`@eneris/push-receiver`, which creates a Chromium-compatible WebPush transport. Its bundle ID is
+the APK package.
 
 ### Topics and Fixed Location
 
@@ -226,14 +227,37 @@ u_id=<backend ID>
 tile=<xNyN topic>
 ```
 
-An optional `EARTHQUAKE_FCM_GATEWAY_URL` can also replace topic membership when configured. Runtime
-Firebase config and VAPID overrides are accepted through `EARTHQUAKE_FIREBASE_CONFIG` and
-`EARTHQUAKE_FIREBASE_VAPID_KEY`.
+Fixed-location synchronization mirrors the APK's separate location request:
+
+```text
+POST https://srv.earthquakenetwork.it/distquake_upload_gcm_latlon.php
+u_id=<backend ID>
+lat=<fixed latitude>
+lon=<fixed longitude>
+acc=-1
+upd=<1 when either coordinate changed by at least 0.1 degree, otherwise 0>
+```
+
+Backend registration, tile reporting, and location synchronization do **not** prove Firebase topic
+membership. Although `@eneris/push-receiver` has no topic helper, the application mirrors the APK's
+Firebase Messaging SDK request directly:
+
+```text
+POST https://fcmregistrations.googleapis.com/v1/projects/<project>/registrations/<fid>/topicSubscriptions/<topic>:subscribe
+x-goog-api-key: <Firebase API key>
+x-goog-firebase-installations-auth: <installation auth token>
+```
+
+The previous fixed-location topic is removed through the corresponding `:unsubscribe` operation.
+Only successful Firebase 2xx responses may populate `subscribedTopics`; never infer membership from
+backend registration. Runtime Firebase config and VAPID overrides are accepted through
+`EARTHQUAKE_FIREBASE_CONFIG` and `EARTHQUAKE_FIREBASE_VAPID_KEY`.
 
 ### Firebase Installation Lifecycle
 
 `fcm-state.json` contains WebPush keys, GCM check-in credentials, the final FCM token, Firebase
-Installation auth/refresh data, persistent message IDs, and the Earthquake Network backend ID.
+Installation auth/refresh data, confirmed topics and their FID, persistent message IDs, and the
+Earthquake Network backend ID.
 Firebase Installation auth tokens last seven days and are refreshed one hour before expiry using
 the APK-compatible FIS v2 flow. If refresh fails, the service creates a new installation.
 
@@ -255,6 +279,13 @@ registration but does not currently call a remote Firebase Installation delete e
 - `realtime`: preliminary immediate alert data, often with estimated local intensity and revisions.
 - `seismic-network`: normal/official network earthquake report with magnitude, depth, place, and
   coordinates.
+
+For realtime payloads, `intensity` is the source classification, not the expected intensity at the
+fixed user location. Expected local intensity uses the APK attenuation formula when the payload
+does not contain an explicit local-intensity field. Wave visualization/countdown uses the payload's
+`wave_speed` and `delay` values. Official payload metadata such as `magnitude_range`, `reports`, and
+`data` is retained. Community and social types (`manual`, chat, friendship) are intentionally
+ignored.
 
 Both types are always persisted when valid, even if notification preferences suppress UI delivery.
 Repeated event IDs are upserted so newer revisions replace the existing stored earthquake.
@@ -371,8 +402,7 @@ Repeated event IDs are upserted so newer revisions replace the existing stored e
 - Fixed-location receiver: no background GPS movement and no topic polling.
 - Exactly two desired channels: `global` plus the selected 10-degree tile.
 - Mobile-compatible backend payloads: do not add desktop/developer fields to APK endpoint forms.
-- WebPush transport on desktop: `wp:` is expected locally and does not go to the Earthquake Network
-  backend.
+- WebPush transport on desktop does not go to the Earthquake Network backend.
 - Earthquake history is server-driven: no Add/+ button and no initial placeholder event.
 - Internal `session` naming is intentionally retained even though the UI says Earthquakes.
 - Alarm audio is the static asset extracted from the mobile application and there is no sound picker.

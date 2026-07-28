@@ -15,8 +15,8 @@ export const earthquakeEn = {
   fcmStatusDescription:
     'A token is obtained at startup and the connection is checked at this interval.',
   fcmNotConfiguredDescription: 'No authorized Firebase client configuration is available.',
-  gatewayNotConfiguredDescription:
-    'The FCM token is connected, but the topic gateway is not configured.',
+  topicSubscriptionFailedDescription:
+    'The transport is connected, but Firebase topic membership could not be confirmed.',
   checkInterval: 'FCM check interval',
   checkIntervalDescription:
     'Stored and scheduled in minutes. The mobile default is 8 hours (480 minutes).',
@@ -24,6 +24,12 @@ export const earthquakeEn = {
   checkNow: 'Check now',
   token: 'FCM token',
   backendUserId: 'Earthquake Network device ID',
+  backendRegistration: 'Backend registration',
+  tileRegistration: 'Tile registration',
+  locationSynchronization: 'Location synchronization',
+  topicMembership: 'Firebase topic membership',
+  confirmed: 'Confirmed',
+  notConfirmed: 'Not confirmed',
   firebaseInstallationId: 'Firebase installation ID',
   gcmAndroidId: 'GCM Android ID',
   gcmAppId: 'GCM app ID',
@@ -89,7 +95,7 @@ export const earthquakeEn = {
 
 export const earthquakeTr: typeof earthquakeEn = {
   fcmNotConfiguredDescription: 'Yetkili Firebase istemci yapılandırması bulunmuyor.',
-  gatewayNotConfiguredDescription: 'FCM token bağlı, ancak konu geçidi yapılandırılmamış.',
+  topicSubscriptionFailedDescription: 'Aktarım bağlı, ancak Firebase konu üyeliği doğrulanamadı.',
   notificationPresentation: 'Bildirim tipi',
   realtimeNotificationPresentationDescription:
     'Güçlü gerçek zamanlı uyarılar bu tipi kullanır; hafif uyarılar normal kalır.',
@@ -121,6 +127,12 @@ export const earthquakeTr: typeof earthquakeEn = {
   checkNow: 'Şimdi kontrol et',
   token: 'FCM token',
   backendUserId: 'Earthquake Network cihaz ID',
+  backendRegistration: 'Backend kaydı',
+  tileRegistration: 'Tile kaydı',
+  locationSynchronization: 'Konum eşitleme',
+  topicMembership: 'Firebase konu üyeliği',
+  confirmed: 'Doğrulandı',
+  notConfirmed: 'Doğrulanmadı',
   firebaseInstallationId: 'Firebase kurulum ID',
   gcmAndroidId: 'GCM Android ID',
   gcmAppId: 'GCM uygulama ID',

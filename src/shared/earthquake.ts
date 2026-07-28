@@ -5,6 +5,7 @@
 export const EARTHQUAKE_GLOBAL_TOPIC = 'global'
 export const ESTIMATED_S_WAVE_SPEED_KM_PER_SECOND = 3.5
 const EARTH_RADIUS_KM = 6_371
+const EARTHQUAKE_NETWORK_ATTENUATION_SCALE = 162_103_724
 
 /** Describes the estimated realtime wavefront at one instant. */
 export interface EarthquakeWaveState {
@@ -71,17 +72,38 @@ export const calculateDestinationCoordinates = (
   return [degrees(destinationLatitude), normalizedLongitude]
 }
 
-/** Estimates wavefront radius and arrival countdown using a fixed S-wave velocity. */
+/** Reproduces the mobile client's expected local-intensity attenuation calculation. */
+export const estimateEarthquakeNetworkIntensity = (
+  magnitude: number,
+  distanceKm: number,
+): number => {
+  const safeDistance = Math.max(0, distanceKm)
+  const attenuationDistance = Math.sqrt(
+    Math.sin(safeDistance / (EARTH_RADIUS_KM * 2)) ** 2 * EARTHQUAKE_NETWORK_ATTENUATION_SCALE +
+      100,
+  )
+  const intensity = magnitude * 1.03 - Math.log10(attenuationDistance) * 2.15 + 2.31
+  return Math.max(0, Math.min(12, intensity))
+}
+
+/** Estimates wavefront radius and countdown using the message speed and transport delay. */
 export const calculateEarthquakeWaveState = (
   distanceKm: number,
   elapsedSeconds: number,
+  waveSpeedKmPerSecond = ESTIMATED_S_WAVE_SPEED_KM_PER_SECOND,
+  alertDelaySeconds = 0,
 ): EarthquakeWaveState => {
   const safeDistance = Math.max(0, distanceKm)
   const safeElapsed = Math.max(0, elapsedSeconds)
-  const travelSeconds = safeDistance / ESTIMATED_S_WAVE_SPEED_KM_PER_SECOND
-  const remainingSeconds = Math.max(0, Math.ceil(travelSeconds - safeElapsed))
+  const safeSpeed =
+    Number.isFinite(waveSpeedKmPerSecond) && waveSpeedKmPerSecond > 0
+      ? waveSpeedKmPerSecond
+      : ESTIMATED_S_WAVE_SPEED_KM_PER_SECOND
+  const propagatedSeconds = safeElapsed + Math.max(0, alertDelaySeconds)
+  const travelSeconds = safeDistance / safeSpeed
+  const remainingSeconds = Math.max(0, Math.ceil(travelSeconds - propagatedSeconds))
   return {
-    radiusKm: safeElapsed * ESTIMATED_S_WAVE_SPEED_KM_PER_SECOND,
+    radiusKm: propagatedSeconds * safeSpeed,
     remainingSeconds,
     arrived: remainingSeconds === 0,
   }

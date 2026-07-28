@@ -22,3 +22,19 @@ export const EARTHQUAKE_NETWORK_REGISTER_URL =
 
 export const EARTHQUAKE_NETWORK_UPDATE_TILE_URL =
   'https://srv.earthquakenetwork.it/distquake_update_tile.php'
+
+export const EARTHQUAKE_NETWORK_UPDATE_LOCATION_URL =
+  'https://srv.earthquakenetwork.it/distquake_upload_gcm_latlon.php'
+
+/** Firebase Messaging client endpoint used by the APK for topic membership operations. */
+export const FIREBASE_TOPIC_REGISTRATION_BASE_URL =
+  'https://fcmregistrations.googleapis.com/v1/projects'
+
+/** Builds the official FCM client URL for one installation topic operation. */
+export const createFirebaseTopicMembershipUrl = (
+  projectId: string,
+  firebaseInstallationId: string,
+  topic: string,
+  operation: 'subscribe' | 'unsubscribe',
+): string =>
+  `${FIREBASE_TOPIC_REGISTRATION_BASE_URL}/${encodeURIComponent(projectId)}/registrations/${encodeURIComponent(firebaseInstallationId)}/topicSubscriptions/${encodeURIComponent(topic)}:${operation}`

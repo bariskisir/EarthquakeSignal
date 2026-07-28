@@ -28,8 +28,14 @@ const earthquakeEventSchema = z.object({
   depthKm: z.number().min(-20).max(1_000).optional(),
   place: z.string().max(500).optional(),
   revision: z.number().int().min(0).optional(),
+  sourceIntensity: z.number().min(0).max(12).optional(),
   estimatedIntensity: z.number().min(0).max(12).optional(),
+  waveSpeedKmPerSecond: z.number().positive().max(20).optional(),
+  alertDelaySeconds: z.number().min(0).max(86_400).optional(),
   distanceKm: z.number().min(0).max(30_000).optional(),
+  magnitudeRange: z.number().min(0).max(12).optional(),
+  reportCount: z.number().int().min(0).max(1_000_000).optional(),
+  providerData: z.string().max(1_000).optional(),
   warning: z.string().max(1_000).optional(),
 })
 

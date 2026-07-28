@@ -152,12 +152,14 @@ const EarthquakeSettingsSection = (): React.JSX.Element => {
     status.state === 'not-configured'
       ? t('earthquake.fcmNotConfiguredDescription')
       : status.state === 'connected' && status.subscribedTopics.length === 0
-        ? t('earthquake.gatewayNotConfiguredDescription')
+        ? t('earthquake.topicSubscriptionFailedDescription')
         : (status.message ?? t('earthquake.fcmStatusDescription'))
 
   const statusColor =
     status.state === 'connected'
-      ? 'success'
+      ? status.subscribedTopics.length === status.topics.length
+        ? 'success'
+        : 'warning'
       : status.state === 'error'
         ? 'error'
         : status.state === 'connecting'
@@ -208,6 +210,48 @@ const EarthquakeSettingsSection = (): React.JSX.Element => {
                 <div className={styles.fcmDetail}>
                   <span>{t('earthquake.backendUserId')}</span>
                   <code>{status.backendUserId}</code>
+                </div>
+              )}
+              {status.backendRegistered !== undefined && (
+                <div className={styles.fcmDetail}>
+                  <span>{t('earthquake.backendRegistration')}</span>
+                  <Tag color={status.backendRegistered ? 'success' : 'error'}>
+                    {t(
+                      status.backendRegistered ? 'earthquake.confirmed' : 'earthquake.notConfirmed',
+                    )}
+                  </Tag>
+                </div>
+              )}
+              {status.tileRegistered !== undefined && (
+                <div className={styles.fcmDetail}>
+                  <span>{t('earthquake.tileRegistration')}</span>
+                  <Tag color={status.tileRegistered ? 'success' : 'error'}>
+                    {t(status.tileRegistered ? 'earthquake.confirmed' : 'earthquake.notConfirmed')}
+                  </Tag>
+                </div>
+              )}
+              {status.locationSynchronized !== undefined && (
+                <div className={styles.fcmDetail}>
+                  <span>{t('earthquake.locationSynchronization')}</span>
+                  <Tag color={status.locationSynchronized ? 'success' : 'error'}>
+                    {t(
+                      status.locationSynchronized
+                        ? 'earthquake.confirmed'
+                        : 'earthquake.notConfirmed',
+                    )}
+                  </Tag>
+                </div>
+              )}
+              {status.topicMembershipConfirmed !== undefined && (
+                <div className={styles.fcmDetail}>
+                  <span>{t('earthquake.topicMembership')}</span>
+                  <Tag color={status.topicMembershipConfirmed ? 'success' : 'error'}>
+                    {t(
+                      status.topicMembershipConfirmed
+                        ? 'earthquake.confirmed'
+                        : 'earthquake.notConfirmed',
+                    )}
+                  </Tag>
                 </div>
               )}
               {status.firebaseInstallationId && (

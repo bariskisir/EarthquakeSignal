@@ -5,7 +5,14 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { Notification, safeStorage, screen, type BrowserWindow, type Rectangle } from 'electron'
+import {
+  Notification,
+  powerMonitor,
+  safeStorage,
+  screen,
+  type BrowserWindow,
+  type Rectangle,
+} from 'electron'
 import PushReceiver from '@eneris/push-receiver'
 import type { Types } from '@eneris/push-receiver/dist/client'
 import {
@@ -28,11 +35,14 @@ import type {
 } from '@shared/types'
 import { z } from 'zod'
 import {
+  createFirebaseTopicMembershipUrl,
   EARTHQUAKE_NETWORK_FIREBASE_CONFIG,
   EARTHQUAKE_NETWORK_PACKAGE_ID,
   EARTHQUAKE_NETWORK_REGISTER_URL,
+  EARTHQUAKE_NETWORK_UPDATE_LOCATION_URL,
   EARTHQUAKE_NETWORK_UPDATE_TILE_URL,
 } from '../earthquakeNetworkConfig'
+import { parseEarthquakeEnvelope } from './EarthquakePayloadParser'
 import type LoggerService from './LoggerService'
 import type StorageService from './StorageService'
 
@@ -66,14 +76,25 @@ const credentialsSchema = z.custom<Types.Credentials>(
 const receiverStateSchema = z.object({
   credentials: credentialsSchema.optional(),
   persistentIds: z.array(z.string()).max(500).default([]),
+  subscribedTopics: z
+    .array(z.string().regex(/^[a-zA-Z0-9-_.~%]{1,900}$/))
+    .max(10)
+    .default([]),
+  topicRegistrationFid: z.string().min(1).max(100).optional(),
   backendUserId: z.string().regex(/^\d+$/).optional(),
+  lastRegisteredLatitude: z.number().min(-90).max(90).optional(),
+  lastRegisteredLongitude: z.number().min(-180).max(180).optional(),
 })
 const legacyEncryptedReceiverStateSchema = z.object({ encrypted: z.string().min(1) })
 
 interface ReceiverState {
   credentials?: Types.Credentials | undefined
   persistentIds: string[]
+  subscribedTopics: string[]
+  topicRegistrationFid?: string | undefined
   backendUserId?: string | undefined
+  lastRegisteredLatitude?: number | undefined
+  lastRegisteredLongitude?: number | undefined
 }
 
 interface FullscreenWindowState {
@@ -96,10 +117,15 @@ export default class EarthquakeService {
   private stateWriteTail: Promise<void> = Promise.resolve()
   private fullscreenWindowState: FullscreenWindowState | null = null
   private fullscreenRetryTimers: NodeJS.Timeout[] = []
+  private powerMonitoringActive = false
   private status: EarthquakeServiceStatus
   private readonly statusListeners = new Set<StatusListener>()
   private readonly earthquakeListeners = new Set<EarthquakeListener>()
   private readonly notificationOpenListeners = new Set<NotificationOpenListener>()
+  private readonly handleSystemResume = (): void => {
+    this.logger.info('EarthquakeService', 'System resumed; refreshing the FCM transport.')
+    void this.refresh()
+  }
 
   /** Creates an inactive receiver; start is called after the renderer window exists. */
   public constructor(
@@ -108,7 +134,6 @@ export default class EarthquakeService {
     private readonly dataRoot: string,
     private readonly window: BrowserWindow,
     settings: AppSettings,
-    private readonly appVersion: string,
     private readonly notificationProtocol: string | null,
   ) {
     this.settings = settings
@@ -121,6 +146,10 @@ export default class EarthquakeService {
 
   /** Starts FCM registration immediately and plans the next minute-based check. */
   public async start(): Promise<EarthquakeServiceStatus> {
+    if (!this.powerMonitoringActive) {
+      powerMonitor.on('resume', this.handleSystemResume)
+      this.powerMonitoringActive = true
+    }
     return this.refresh()
   }
 
@@ -139,7 +168,7 @@ export default class EarthquakeService {
     this.status = {
       ...this.status,
       topics: createEarthquakeTopics(settings.earthquakeLatitude, settings.earthquakeLongitude),
-      ...(connectionChanged ? { subscribedTopics: [] } : {}),
+      ...(connectionChanged ? { subscribedTopics: [], topicMembershipConfirmed: false } : {}),
     }
     this.scheduleNextCheck()
     if (connectionChanged) {
@@ -267,6 +296,10 @@ export default class EarthquakeService {
     this.statusListeners.clear()
     this.earthquakeListeners.clear()
     this.notificationOpenListeners.clear()
+    if (this.powerMonitoringActive) {
+      powerMonitor.removeListener('resume', this.handleSystemResume)
+      this.powerMonitoringActive = false
+    }
   }
 
   /** Establishes one fresh receiver so application starts and upgrades always reschedule work. */
@@ -308,26 +341,68 @@ export default class EarthquakeService {
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     })
     this.receiver = receiver
+    let activeBackendUserId = persisted.backendUserId
+    let activeRegisteredLatitude = persisted.lastRegisteredLatitude
+    let activeRegisteredLongitude = persisted.lastRegisteredLongitude
+    let activeSubscribedTopics = persisted.subscribedTopics
+    let activeTopicRegistrationFid = persisted.topicRegistrationFid
     receiver.onCredentialsChanged(({ newCredentials }) => {
       void this.saveReceiverState({
         credentials: newCredentials,
         persistentIds: receiver.persistentIds.slice(-500),
-        ...(persisted.backendUserId ? { backendUserId: persisted.backendUserId } : {}),
+        subscribedTopics: activeSubscribedTopics,
+        ...(activeTopicRegistrationFid ? { topicRegistrationFid: activeTopicRegistrationFid } : {}),
+        ...(activeBackendUserId ? { backendUserId: activeBackendUserId } : {}),
+        ...(activeRegisteredLatitude === undefined
+          ? {}
+          : { lastRegisteredLatitude: activeRegisteredLatitude }),
+        ...(activeRegisteredLongitude === undefined
+          ? {}
+          : { lastRegisteredLongitude: activeRegisteredLongitude }),
       })
     })
     receiver.onNotification((envelope) => {
       void this.receiveEnvelope(envelope, receiver)
+    })
+    receiver.on('ON_CONNECT', () => {
+      if (this.receiver !== receiver) return
+      this.updateStatus({
+        ...this.status,
+        state: 'connecting',
+        message: 'FCM transport socket connected; waiting for authentication.',
+      })
+    })
+    receiver.onReady(() => {
+      if (this.receiver !== receiver) return
+      this.updateStatus({
+        ...this.status,
+        state: 'connected',
+        lastCheckedAt: new Date().toISOString(),
+        message: 'FCM transport connected.',
+      })
+    })
+    receiver.on('ON_DISCONNECT', () => {
+      if (this.receiver !== receiver) return
+      this.updateStatus({
+        ...this.status,
+        state: 'disconnected',
+        message: 'FCM transport disconnected; automatic reconnection is in progress.',
+      })
     })
 
     try {
       await receiver.connect()
       const token = receiver.fcmToken
       const credentials = await receiver.registerIfNeeded()
-      let backendUserId = persisted.backendUserId
       let backendRegistered = false
+      let tileRegistered = false
+      let locationSynchronized = false
+      let topicMembershipConfirmed = false
       try {
-        backendUserId = await this.registerEarthquakeNetworkBackend(token, backendUserId)
-        await this.updateEarthquakeNetworkTile(backendUserId, topics[1] ?? '')
+        activeBackendUserId = await this.registerEarthquakeNetworkBackend(
+          token,
+          activeBackendUserId,
+        )
         backendRegistered = true
       } catch (error) {
         this.logger.error(
@@ -336,19 +411,90 @@ export default class EarthquakeService {
           error,
         )
       }
+      if (activeBackendUserId && backendRegistered) {
+        try {
+          await this.updateEarthquakeNetworkTile(activeBackendUserId, topics[1] ?? '')
+          tileRegistered = true
+        } catch (error) {
+          this.logger.error('EarthquakeService', 'Earthquake Network tile update failed.', error)
+        }
+        try {
+          await this.updateEarthquakeNetworkLocation(
+            activeBackendUserId,
+            activeRegisteredLatitude,
+            activeRegisteredLongitude,
+          )
+          activeRegisteredLatitude = this.settings.earthquakeLatitude
+          activeRegisteredLongitude = this.settings.earthquakeLongitude
+          locationSynchronized = true
+        } catch (error) {
+          this.logger.error(
+            'EarthquakeService',
+            'Earthquake Network location synchronization failed.',
+            error,
+          )
+        }
+      }
+      const installationFid = credentials.fcm.installation.fid
+      const previouslySubscribedTopics =
+        persisted.topicRegistrationFid === installationFid
+          ? persisted.subscribedTopics
+          : persisted.credentials?.fcm.installation.fid === installationFid &&
+              persisted.lastRegisteredLatitude !== undefined &&
+              persisted.lastRegisteredLongitude !== undefined
+            ? createEarthquakeTopics(
+                persisted.lastRegisteredLatitude,
+                persisted.lastRegisteredLongitude,
+              )
+            : []
+      activeSubscribedTopics = previouslySubscribedTopics
+      activeTopicRegistrationFid = installationFid
+      try {
+        await this.synchronizeFirebaseTopics(
+          firebase,
+          credentials.fcm.installation,
+          topics,
+          previouslySubscribedTopics,
+        )
+        activeSubscribedTopics = [...topics]
+        topicMembershipConfirmed = true
+      } catch (error) {
+        this.logger.error(
+          'EarthquakeService',
+          'Official Firebase topic membership synchronization failed; the receiver will remain connected.',
+          error,
+        )
+      }
       await this.saveReceiverState({
         credentials,
         persistentIds: receiver.persistentIds.slice(-500),
-        ...(backendUserId ? { backendUserId } : {}),
+        subscribedTopics: activeSubscribedTopics,
+        topicRegistrationFid: activeTopicRegistrationFid,
+        ...(activeBackendUserId ? { backendUserId: activeBackendUserId } : {}),
+        ...(activeRegisteredLatitude === undefined
+          ? {}
+          : { lastRegisteredLatitude: activeRegisteredLatitude }),
+        ...(activeRegisteredLongitude === undefined
+          ? {}
+          : { lastRegisteredLongitude: activeRegisteredLongitude }),
       })
-      const gatewaySubscribed = await this.replaceGatewayTopics(token, topics)
-      const subscribed = gatewaySubscribed || backendRegistered
+      const message = !topicMembershipConfirmed
+        ? 'FCM transport connected, but Firebase topic membership could not be confirmed.'
+        : !backendRegistered
+          ? 'FCM topics are subscribed, but Earthquake Network backend registration failed.'
+          : !tileRegistered || !locationSynchronized
+            ? 'FCM topics are subscribed; Earthquake Network location metadata is incomplete.'
+            : 'FCM token, topics, tile, and fixed location are registered.'
       this.updateStatus({
         state: 'connected',
         topics,
-        subscribedTopics: subscribed ? topics : [],
+        subscribedTopics: topicMembershipConfirmed ? topics : [],
         token,
-        ...(backendUserId ? { backendUserId } : {}),
+        ...(activeBackendUserId ? { backendUserId: activeBackendUserId } : {}),
+        backendRegistered,
+        tileRegistered,
+        locationSynchronized,
+        topicMembershipConfirmed,
         firebaseInstallationId: credentials.fcm.installation.fid,
         gcmAndroidId: credentials.gcm.androidId,
         gcmAppId: credentials.gcm.appId,
@@ -360,17 +506,17 @@ export default class EarthquakeService {
         ).toISOString(),
         persistentMessageCount: receiver.persistentIds.length,
         lastCheckedAt: new Date().toISOString(),
-        ...(backendRegistered
-          ? { message: 'FCM token is registered with the Earthquake Network backend.' }
-          : !subscribed
-            ? { message: 'FCM token is ready; backend channel registration failed.' }
-            : {}),
+        message,
       })
       this.logger.info('EarthquakeService', 'FCM receiver connected.', {
         topics,
-        subscribedTopics: subscribed ? topics : [],
+        subscribedTopics: topicMembershipConfirmed ? topics : [],
         token,
-        backendUserId,
+        backendUserId: activeBackendUserId,
+        backendRegistered,
+        tileRegistered,
+        locationSynchronized,
+        topicMembershipConfirmed,
         firebaseInstallationId: credentials.fcm.installation.fid,
         gcmAndroidId: credentials.gcm.androidId,
         gcmAppId: credentials.gcm.appId,
@@ -384,12 +530,6 @@ export default class EarthquakeService {
         latitude: this.settings.earthquakeLatitude,
         longitude: this.settings.earthquakeLongitude,
       })
-      if (!gatewaySubscribed && !backendRegistered) {
-        this.logger.warn(
-          'EarthquakeService',
-          'FCM token is connected, but EARTHQUAKE_FCM_GATEWAY_URL is not configured.',
-        )
-      }
     } catch (error) {
       receiver.destroy()
       if (this.receiver === receiver) this.receiver = null
@@ -482,6 +622,41 @@ export default class EarthquakeService {
     })
   }
 
+  /** Synchronizes the fixed coordinates through the APK's dedicated location endpoint. */
+  private async updateEarthquakeNetworkLocation(
+    userId: string,
+    previousLatitude?: number,
+    previousLongitude?: number,
+  ): Promise<void> {
+    const latitude = this.settings.earthquakeLatitude
+    const longitude = this.settings.earthquakeLongitude
+    const changed =
+      previousLatitude === undefined ||
+      previousLongitude === undefined ||
+      Math.abs(latitude - previousLatitude) >= 0.1 ||
+      Math.abs(longitude - previousLongitude) >= 0.1
+    const request = {
+      u_id: userId,
+      lat: String(latitude),
+      lon: String(longitude),
+      acc: '-1',
+      upd: changed ? '1' : '0',
+    }
+    const response = await fetch(EARTHQUAKE_NETWORK_UPDATE_LOCATION_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded;charset=utf-8' },
+      body: new URLSearchParams(request),
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!response.ok) {
+      throw new Error(`Earthquake Network location update returned HTTP ${response.status}.`)
+    }
+    this.logger.info('EarthquakeService', 'Earthquake Network fixed location synchronized.', {
+      endpoint: EARTHQUAKE_NETWORK_UPDATE_LOCATION_URL,
+      request,
+    })
+  }
+
   /** Refreshes an expiring Firebase installation auth token as the mobile SDK does. */
   private async refreshFirebaseInstallationIfNeeded(
     credentials: Types.Credentials,
@@ -548,30 +723,62 @@ export default class EarthquakeService {
     }
   }
 
-  /** Replaces gateway topic membership with exactly global plus the fixed location tile. */
-  private async replaceGatewayTopics(token: string, topics: string[]): Promise<boolean> {
-    const gateway = process.env.EARTHQUAKE_FCM_GATEWAY_URL
-    if (!gateway) return false
-    const response = await fetch(gateway, {
+  /** Mirrors FirebaseMessaging.subscribeToTopic and removes any previous fixed-location tile. */
+  private async synchronizeFirebaseTopics(
+    firebase: Types.FirebaseConfig,
+    installation: Types.InstallationData,
+    desiredTopics: string[],
+    previousTopics: string[],
+  ): Promise<void> {
+    for (const topic of desiredTopics) {
+      await this.changeFirebaseTopicMembership(firebase, installation, topic, 'subscribe')
+    }
+    for (const topic of previousTopics) {
+      if (!desiredTopics.includes(topic)) {
+        await this.changeFirebaseTopicMembership(firebase, installation, topic, 'unsubscribe')
+      }
+    }
+  }
+
+  /** Calls the official Firebase Messaging installation topic endpoint used by the APK SDK. */
+  private async changeFirebaseTopicMembership(
+    firebase: Types.FirebaseConfig,
+    installation: Types.InstallationData,
+    topic: string,
+    operation: 'subscribe' | 'unsubscribe',
+  ): Promise<void> {
+    const endpoint = createFirebaseTopicMembershipUrl(
+      firebase.projectId,
+      installation.fid,
+      topic,
+      operation,
+    )
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
-        ...(process.env.EARTHQUAKE_FCM_GATEWAY_TOKEN
-          ? { authorization: `Bearer ${process.env.EARTHQUAKE_FCM_GATEWAY_TOKEN}` }
-          : {}),
+        'x-goog-api-key': firebase.apiKey,
+        'x-goog-firebase-installations-auth': installation.token,
       },
-      body: JSON.stringify({
-        token,
-        topics,
-        replaceTopics: true,
-        latitude: this.settings.earthquakeLatitude,
-        longitude: this.settings.earthquakeLongitude,
-        appVersion: this.appVersion,
-      }),
       signal: AbortSignal.timeout(15_000),
     })
-    if (!response.ok) throw new Error(`Topic gateway returned HTTP ${response.status}.`)
-    return true
+    const responseBody = await response.text()
+    const details = {
+      endpoint,
+      operation,
+      topic,
+      firebaseInstallationId: installation.fid,
+      projectId: firebase.projectId,
+      status: response.status,
+      statusText: response.statusText,
+      responseBody,
+    }
+    if (!response.ok) {
+      this.logger.error('EarthquakeService', 'Firebase topic membership request failed.', details)
+      throw new Error(
+        `Firebase topic ${operation} failed for ${topic} with HTTP ${response.status}.`,
+      )
+    }
+    this.logger.info('EarthquakeService', 'Firebase topic membership confirmed.', details)
   }
 
   /** Converts a package message envelope to the common earthquake model. */
@@ -581,7 +788,11 @@ export default class EarthquakeService {
   ): Promise<void> {
     this.logger.info('EarthquakeService', 'Raw FCM message received.', envelope)
     try {
-      const earthquake = this.parseEarthquake(envelope)
+      const earthquake = parseEarthquakeEnvelope(
+        envelope,
+        this.settings.earthquakeLatitude,
+        this.settings.earthquakeLongitude,
+      )
       await this.saveReceiverState({
         ...(await this.loadReceiverState()),
         persistentIds: receiver.persistentIds.slice(-500),
@@ -624,165 +835,6 @@ export default class EarthquakeService {
       listener(received)
     })
     return received
-  }
-
-  /** Accepts the compact mobile payload aliases used by normal and real-time messages. */
-  private parseEarthquake(envelope: Types.MessageEnvelope): EarthquakeEvent | null {
-    const base = envelope.message.data ?? {}
-    const nested = this.parseNestedPayload(
-      base.payload ?? base.data ?? base.notification_data ?? base.notification_bundle,
-    )
-    const data = { ...base, ...nested }
-    const latitude = this.readNumber(data, [
-      'latitude',
-      'lat',
-      'y',
-      'latitude_eqn',
-      'latitude_notification',
-      'official_lat_notification',
-      'preliminary_latitude',
-    ])
-    const longitude = this.readNumber(data, [
-      'longitude',
-      'lng',
-      'lon',
-      'x',
-      'longitude_eqn',
-      'longitude_notification',
-      'official_lon_notification',
-      'preliminary_longitude',
-    ])
-    if (latitude === null || longitude === null) return null
-    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null
-
-    const rawType = this.readString(data, ['type', 'eventType', 'notificationType'])?.toLowerCase()
-    const realtime =
-      rawType?.includes('real') === true ||
-      rawType?.includes('eqn') === true ||
-      data.eqn_notification !== undefined ||
-      data.realtime !== undefined ||
-      data.upd !== undefined ||
-      data.revision !== undefined
-    const kind = realtime ? 'realtime' : 'seismic-network'
-    const magnitude = this.readNumber(data, [
-      'magnitude',
-      'mag',
-      'm',
-      'magnitude_eqn',
-      'official_mag_notification',
-      'preliminary_magnitude',
-    ])
-    const depthKm = this.readNumber(data, ['depth', 'depthKm', 'dep'])
-    const revision = this.readNumber(data, ['revision', 'upd', 'update'])
-    const source =
-      this.readString(data, ['source', 'provider', 'network', 'official_provider_notification']) ??
-      'Earthquake Network'
-    const place =
-      this.readString(data, ['place', 'location', 'city', 'region', 'notification_title']) ??
-      envelope.message.notification?.body
-    const distanceKm = calculateDistanceKm(
-      this.settings.earthquakeLatitude,
-      this.settings.earthquakeLongitude,
-      latitude,
-      longitude,
-    )
-    const providedIntensity = this.readNumber(data, [
-      'intensity_at_location_eqn',
-      'intensity_eqn',
-      'intensity',
-      'mmi',
-      'estimatedIntensity',
-    ])
-    const estimatedIntensity =
-      providedIntensity ??
-      (magnitude === null ? null : this.estimateIntensity(magnitude, distanceKm, depthKm ?? 0))
-    const eventKey =
-      this.readString(data, ['code', 'eventId', 'id', 'earthquakeId']) ??
-      envelope.message.fcmMessageId ??
-      envelope.persistentId
-    const receivedAt = new Date().toISOString()
-    const occurredAt = this.readDate(data, [
-      'occurredAt',
-      'datetime',
-      'date',
-      'timestamp',
-      'time',
-      'official_date_notification',
-    ])
-    const warning = this.readString(data, ['warning', 'message', 'official_reports_notification'])
-
-    return {
-      id: createHash('sha256').update(`${kind}:${eventKey}`).digest('hex'),
-      kind,
-      source,
-      latitude,
-      longitude,
-      receivedAt,
-      distanceKm: Number(distanceKm.toFixed(1)),
-      ...(occurredAt ? { occurredAt } : {}),
-      ...(magnitude === null ? {} : { magnitude }),
-      ...(depthKm === null ? {} : { depthKm }),
-      ...(place ? { place } : {}),
-      ...(revision === null ? {} : { revision: Math.max(0, Math.round(revision)) }),
-      ...(estimatedIntensity === null
-        ? {}
-        : { estimatedIntensity: Number(estimatedIntensity.toFixed(1)) }),
-      ...(warning ? { warning } : {}),
-    }
-  }
-
-  /** Parses a JSON-encoded nested data field while rejecting arrays and primitives. */
-  private parseNestedPayload(value: unknown): Record<string, unknown> {
-    if (isRecord(value)) return value
-    if (typeof value !== 'string') return {}
-    try {
-      const parsed: unknown = JSON.parse(value)
-      return isRecord(parsed) ? parsed : {}
-    } catch {
-      return {}
-    }
-  }
-
-  /** Reads the first finite numeric payload alias. */
-  private readNumber(data: Record<string, unknown>, keys: string[]): number | null {
-    for (const key of keys) {
-      const value = data[key]
-      const number =
-        typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN
-      if (Number.isFinite(number)) return number
-    }
-    return null
-  }
-
-  /** Reads the first non-empty string payload alias. */
-  private readString(data: Record<string, unknown>, keys: string[]): string | null {
-    for (const key of keys) {
-      const value = data[key]
-      if (typeof value === 'string' && value.trim()) return value.trim().slice(0, 1_000)
-    }
-    return null
-  }
-
-  /** Converts second/millisecond epochs and ISO-compatible date strings. */
-  private readDate(data: Record<string, unknown>, keys: string[]): string | null {
-    for (const key of keys) {
-      const value = data[key]
-      const numeric =
-        typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN
-      const date = Number.isFinite(numeric)
-        ? new Date(numeric < 10_000_000_000 ? numeric * 1_000 : numeric)
-        : typeof value === 'string'
-          ? new Date(value)
-          : null
-      if (date && !Number.isNaN(date.getTime())) return date.toISOString()
-    }
-    return null
-  }
-
-  /** Estimates local macroseismic intensity when a realtime payload omits it. */
-  private estimateIntensity(magnitude: number, distanceKm: number, depthKm: number): number {
-    const hypocentralDistance = Math.max(1, Math.hypot(distanceKm, Math.max(0, depthKm)))
-    return Math.max(0, Math.min(10, 1.5 * magnitude - 3.5 * Math.log10(hypocentralDistance) + 3))
   }
 
   /** Applies real-time and seismic-network notification settings without dropping sessions. */
@@ -942,10 +994,20 @@ export default class EarthquakeService {
   private scheduleNextCheck(): void {
     if (this.checkTimer) clearTimeout(this.checkTimer)
     const intervalMs = this.settings.fcmCheckIntervalMinutes * 60_000
-    const nextCheckAt = new Date(Date.now() + intervalMs).toISOString()
+    const deadline = Date.now() + intervalMs
+    const nextCheckAt = new Date(deadline).toISOString()
     this.status = { ...this.status, nextCheckAt }
     this.emitStatus()
-    this.checkTimer = setTimeout(() => void this.refresh(), Math.min(intervalMs, 2_147_000_000))
+    const scheduleRemaining = (): void => {
+      const remaining = deadline - Date.now()
+      if (remaining <= 0) {
+        this.checkTimer = null
+        void this.refresh()
+        return
+      }
+      this.checkTimer = setTimeout(scheduleRemaining, Math.min(remaining, 2_147_000_000))
+    }
+    scheduleRemaining()
   }
 
   /** Replaces status and notifies every attached renderer bridge. */
@@ -970,7 +1032,7 @@ export default class EarthquakeService {
       )
       const encrypted = legacyEncryptedReceiverStateSchema.safeParse(value)
       if (encrypted.success) {
-        if (!safeStorage.isEncryptionAvailable()) return { persistentIds: [] }
+        if (!safeStorage.isEncryptionAvailable()) return { persistentIds: [], subscribedTopics: [] }
         const decrypted = safeStorage.decryptString(Buffer.from(encrypted.data.encrypted, 'base64'))
         const migrated = receiverStateSchema.parse(JSON.parse(decrypted))
         await this.saveReceiverState(migrated)
@@ -978,7 +1040,7 @@ export default class EarthquakeService {
       }
       return receiverStateSchema.parse(value)
     } catch {
-      return { persistentIds: [] }
+      return { persistentIds: [], subscribedTopics: [] }
     }
   }
 

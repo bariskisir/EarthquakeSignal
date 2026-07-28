@@ -103,7 +103,6 @@ const openApplicationWindow = async (startHidden = false): Promise<void> => {
     applicationPaths.dataRoot,
     window,
     settings,
-    app.getVersion(),
     process.platform === 'win32' ? EARTHQUAKE_NOTIFICATION_PROTOCOL : null,
   )
   earthquakeService = earthquake

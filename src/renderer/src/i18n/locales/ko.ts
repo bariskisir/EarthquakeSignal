@@ -8,7 +8,7 @@ const ko = {
   earthquake: earthquakeEn,
   app: {
     name: 'Earthquake Signal',
-    tagline: 'A secure desktop workspace.',
+    tagline: '실시간 지진 신호.',
   },
   common: {
     loading: '로딩 중…',
