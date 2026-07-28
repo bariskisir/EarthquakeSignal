@@ -2,7 +2,10 @@
  * Chinese interface strings.
  */
 
+import { earthquakeEn } from './earthquake'
+
 const zh = {
+  earthquake: earthquakeEn,
   app: {
     name: 'Earthquake Signal',
     tagline: 'A secure desktop workspace.',
@@ -14,18 +17,18 @@ const zh = {
     cancel: '取消',
   },
   nav: {
-    sessions: '会话',
+    sessions: '地震',
     settings: '设置',
   },
   sidebar: {
-    hideSidebar: '隐藏侧边栏',
-    showSidebar: '显示侧边栏',
+    hideSidebar: '隐藏地震',
+    showSidebar: '显示地震',
   },
   sessions: {
-    newSession: '新建会话',
-    renameSession: '重命名会话',
-    deleteAll: '删除全部',
-    emptyTitle: '暂无会话',
+    newSession: '新地震',
+    renameSession: '重命名地震',
+    deleteAll: '删除所有地震',
+    emptyTitle: '暂无地震',
   },
   windowControls: {
     minimize: '最小化',

@@ -2,7 +2,10 @@
  * Japanese interface strings.
  */
 
+import { earthquakeEn } from './earthquake'
+
 const ja = {
+  earthquake: earthquakeEn,
   app: {
     name: 'Earthquake Signal',
     tagline: 'A secure desktop workspace.',
@@ -14,18 +17,18 @@ const ja = {
     cancel: 'キャンセル',
   },
   nav: {
-    sessions: 'セッション',
+    sessions: '地震',
     settings: '設定',
   },
   sidebar: {
-    hideSidebar: 'サイドバーを非表示',
-    showSidebar: 'サイドバーを表示',
+    hideSidebar: '地震を非表示',
+    showSidebar: '地震を表示',
   },
   sessions: {
-    newSession: '新規セッション',
-    renameSession: 'セッション名を変更',
-    deleteAll: 'すべて削除',
-    emptyTitle: 'セッションはまだありません',
+    newSession: '新しい地震',
+    renameSession: '地震名を変更',
+    deleteAll: 'すべての地震を削除',
+    emptyTitle: '地震はまだありません',
   },
   windowControls: {
     minimize: '最小化',

@@ -22,20 +22,30 @@ export const useSettingsActions = () => {
   const { t } = useTranslation()
 
   /** Serializes a partial settings update so rapid controls cannot overwrite each other. */
-  const saveSettings = useCallback(
-    async (patch: AppSettingsPatch): Promise<void> => {
+  const saveSettingsWithResult = useCallback(
+    async (patch: AppSettingsPatch): Promise<boolean> => {
       try {
         const saved = await settingsPersistenceQueue.enqueue(patch, window.app.saveSettings)
         dispatch(setSettings(saved))
         document.documentElement.lang = saved.uiLanguage
         await i18n.changeLanguage(saved.uiLanguage)
+        return true
       } catch (error) {
         logger.error('Settings could not be saved.', error)
         void message.error(t('errors.generic'))
+        return false
       }
     },
     [dispatch, message, t],
   )
 
-  return { saveSettings }
+  /** Persists settings for controls that do not need to branch on the result. */
+  const saveSettings = useCallback(
+    async (patch: AppSettingsPatch): Promise<void> => {
+      await saveSettingsWithResult(patch)
+    },
+    [saveSettingsWithResult],
+  )
+
+  return { saveSettings, saveSettingsWithResult }
 }

@@ -17,7 +17,7 @@ export default class WindowService {
   }
 
   /** Creates and loads a hardened desktop window. */
-  public async createWindow(logger: LoggerService): Promise<BrowserWindow> {
+  public async createWindow(logger: LoggerService, showOnReady = true): Promise<BrowserWindow> {
     const window = new BrowserWindow({
       width: 1180,
       height: 760,
@@ -45,7 +45,7 @@ export default class WindowService {
     this.mainWindow = window
     this.configureRendererDiagnostics(window, logger)
     this.configureSecurity(window)
-    window.once('ready-to-show', () => window.show())
+    if (showOnReady) window.once('ready-to-show', () => window.show())
     window.once('closed', () => {
       if (this.mainWindow === window) this.mainWindow = null
     })

@@ -4,7 +4,7 @@
 
 import { useState } from 'react'
 import { Button, Dropdown, Empty, Input, Modal, Tooltip, type MenuProps } from 'antd'
-import { FileText, Pencil, Plus, Trash2 } from 'lucide-react'
+import { FileText, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { SessionSummary } from '@shared/types'
 import { useTheme } from '@renderer/context/ThemeProvider'
@@ -13,7 +13,7 @@ import { useAppSelector } from '@renderer/store'
 import { formatDate } from '@renderer/utils/formatters'
 import styles from './SessionsSidebar.module.scss'
 
-/** Renders new, open, rename, delete, and collapse actions for locally persisted sessions. */
+/** Renders open, rename, delete, and collapse actions for server-provided sessions. */
 const SessionsSidebar = (): React.JSX.Element => {
   const sessions = useAppSelector((state) => state.app.sessions)
   const currentSession = useAppSelector((state) => state.app.currentSession)
@@ -47,14 +47,12 @@ const SessionsSidebar = (): React.JSX.Element => {
     if (renamed) setRenameTarget(null)
   }
 
-  /** Deletes sessions in order while preserving the final workspace. */
+  /** Deletes all local session records in one operation. */
   const deleteAllSessions = async (): Promise<void> => {
     if (deletingAll) return
     setDeletingAll(true)
     try {
-      for (const id of sessions.map((session) => session.id)) {
-        await actions.deleteSession(id)
-      }
+      await actions.deleteAllSessions()
     } finally {
       setDeletingAll(false)
     }
@@ -70,7 +68,7 @@ const SessionsSidebar = (): React.JSX.Element => {
         danger: true,
         icon: <Trash2 size={14} />,
         label: t('common.delete'),
-        disabled: sessions.length <= 1,
+        disabled: deletingAll,
       },
     ],
     onClick: ({ key, domEvent }) => {
@@ -97,16 +95,8 @@ const SessionsSidebar = (): React.JSX.Element => {
                     danger
                     size="small"
                     icon={<Trash2 size={15} />}
-                    disabled={deletingAll || sessions.length <= 1}
+                    disabled={deletingAll || sessions.length === 0}
                     onClick={() => void deleteAllSessions()}
-                  />
-                </Tooltip>
-                <Tooltip title={t('sessions.newSession')}>
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<Plus size={15} />}
-                    onClick={() => void actions.createSession()}
                   />
                 </Tooltip>
               </div>
@@ -123,7 +113,12 @@ const SessionsSidebar = (): React.JSX.Element => {
               ) : (
                 <div className={styles.list}>
                   {sessions.map((item) => (
-                    <Dropdown key={item.id} menu={sessionMenu(item)} trigger={['contextMenu']}>
+                    <Dropdown
+                      key={item.id}
+                      menu={sessionMenu(item)}
+                      trigger={['contextMenu']}
+                      disabled={deletingAll}
+                    >
                       <div
                         className={`${styles.item} ${currentSession?.id === item.id ? styles.active : ''}`}
                       >
@@ -148,7 +143,7 @@ const SessionsSidebar = (): React.JSX.Element => {
                             type="text"
                             danger
                             size="small"
-                            disabled={sessions.length <= 1}
+                            disabled={deletingAll}
                             icon={<Trash2 size={13} />}
                             onClick={() => void actions.deleteSession(item.id)}
                           />

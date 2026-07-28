@@ -9,11 +9,29 @@ import type {
   AppSettings,
   AppSettingsPatch,
   DeleteSessionResult,
+  EarthquakeEvent,
   SessionDocument,
   SessionSummary,
 } from '@shared/types'
 import { z } from 'zod'
 import { parsePersistedSettings, settingsSchema } from '../settingsSchema'
+
+const earthquakeEventSchema = z.object({
+  id: z.string().min(1).max(300),
+  kind: z.enum(['realtime', 'seismic-network']),
+  source: z.string().min(1).max(200),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  receivedAt: z.iso.datetime(),
+  occurredAt: z.iso.datetime().optional(),
+  magnitude: z.number().min(0).max(12).optional(),
+  depthKm: z.number().min(-20).max(1_000).optional(),
+  place: z.string().max(500).optional(),
+  revision: z.number().int().min(0).optional(),
+  estimatedIntensity: z.number().min(0).max(12).optional(),
+  distanceKm: z.number().min(0).max(30_000).optional(),
+  warning: z.string().max(1_000).optional(),
+})
 
 const sessionSchema = z.object({
   id: z.uuid(),
@@ -21,6 +39,7 @@ const sessionSchema = z.object({
   isDefaultTitle: z.boolean(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
+  earthquake: earthquakeEventSchema.optional(),
 })
 
 const DEFAULT_SESSION_TITLE = 'New Session'
@@ -46,6 +65,7 @@ const migrateSession = (input: unknown): unknown => {
     isDefaultTitle,
     createdAt: session.createdAt,
     updatedAt: session.updatedAt,
+    earthquake: session.earthquake,
   }
 }
 
@@ -122,6 +142,35 @@ export default class StorageService {
     return session
   }
 
+  /** Creates one earthquake session or replaces a newer revision of the same event. */
+  public async upsertEarthquakeSession(
+    earthquake: EarthquakeEvent,
+    title: string,
+  ): Promise<SessionDocument> {
+    const summaries = await this.listSessions()
+    for (const summary of summaries) {
+      const existing = await this.tryReadSession(this.sessionPath(summary.id))
+      if (existing?.earthquake?.id !== earthquake.id) continue
+      return this.updateSession(existing.id, (session) => {
+        session.title = title.trim().slice(0, 200) || 'Earthquake'
+        session.isDefaultTitle = false
+        session.updatedAt = earthquake.receivedAt
+        session.earthquake = earthquake
+      })
+    }
+
+    const session: SessionDocument = {
+      id: randomUUID(),
+      title: title.trim().slice(0, 200) || 'Earthquake',
+      isDefaultTitle: false,
+      createdAt: earthquake.receivedAt,
+      updatedAt: earthquake.receivedAt,
+      earthquake,
+    }
+    await this.writeSession(session)
+    return session
+  }
+
   /** Loads and validates one complete session. */
   public async getSession(id: string): Promise<SessionDocument> {
     assertSessionId(id)
@@ -154,7 +203,7 @@ export default class StorageService {
     })
   }
 
-  /** Deletes a session while preserving the last workspace. */
+  /** Deletes one persisted session. */
   public async deleteSession(id: string): Promise<DeleteSessionResult> {
     assertSessionId(id)
     return this.withFileLock(this.sessionsPath, () => this.deleteSessionUnlocked(id))
@@ -163,9 +212,7 @@ export default class StorageService {
   /** Performs one deletion while holding the workspace-wide history lock. */
   private async deleteSessionUnlocked(id: string): Promise<DeleteSessionResult> {
     const sessions = await this.listSessions()
-    if (!sessions.some((session) => session.id === id) || sessions.length <= 1) {
-      return { deleted: false }
-    }
+    if (!sessions.some((session) => session.id === id)) return { deleted: false }
 
     try {
       await this.withFileLock(this.sessionPath(id), () => unlink(this.sessionPath(id)))
@@ -173,6 +220,21 @@ export default class StorageService {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
     }
     return { deleted: true }
+  }
+
+  /** Deletes every session document while holding the workspace-wide lock. */
+  public async deleteAllSessions(): Promise<void> {
+    await this.withFileLock(this.sessionsPath, async () => {
+      const entries = await readdir(this.sessionsPath, { withFileTypes: true })
+      await Promise.all(
+        entries
+          .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+          .map((entry) => {
+            const filePath = join(this.sessionsPath, entry.name)
+            return this.withFileLock(filePath, () => unlink(filePath))
+          }),
+      )
+    })
   }
 
   /** Reads one session while tolerating malformed history entries. */

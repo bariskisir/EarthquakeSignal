@@ -2,7 +2,10 @@
  * Turkish interface strings.
  */
 
+import { earthquakeTr } from './earthquake'
+
 const tr = {
+  earthquake: earthquakeTr,
   app: {
     name: 'Earthquake Signal',
     tagline: 'Güvenli bir masaüstü çalışma alanı.',
@@ -14,18 +17,18 @@ const tr = {
     cancel: 'İptal',
   },
   nav: {
-    sessions: 'Oturumlar',
+    sessions: 'Depremler',
     settings: 'Ayarlar',
   },
   sidebar: {
-    hideSidebar: 'Oturumları gizle',
-    showSidebar: 'Oturumları göster',
+    hideSidebar: 'Depremleri gizle',
+    showSidebar: 'Depremleri göster',
   },
   sessions: {
-    newSession: 'Yeni Oturum',
-    renameSession: 'Oturumu yeniden adlandır',
-    deleteAll: 'Tüm oturumları sil',
-    emptyTitle: 'Henüz oturum yok',
+    newSession: 'Yeni deprem',
+    renameSession: 'Depremi yeniden adlandır',
+    deleteAll: 'Tüm depremleri sil',
+    emptyTitle: 'Henüz deprem yok',
   },
   windowControls: {
     minimize: 'Simge durumuna küçült',
@@ -43,9 +46,10 @@ const tr = {
     interfaceLanguage: 'Arayüz dili',
     interfaceLanguageDescription: 'Uygulamada kullanılan dili seçin.',
     timeFormat: 'Saat biçimi',
-    timeFormatDescription: 'Oturum saatlerinin nasıl gösterileceğini seçin.',
+    timeFormatDescription: 'Deprem saatlerinin nasıl gösterileceğini seçin.',
     startOnStartup: 'Başlangıçta çalıştır',
-    startOnStartupDescription: 'Oturum açtığınızda Earthquake Signal uygulamasını otomatik başlat.',
+    startOnStartupDescription:
+      'Oturum açtığınızda Earthquake Signal uygulamasını sistem tepsisinde otomatik başlat.',
     timeFormats: {
       '24-hour': '24 saat',
       '12-hour': '12 saat',

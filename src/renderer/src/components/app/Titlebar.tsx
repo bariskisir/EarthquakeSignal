@@ -3,7 +3,7 @@
  */
 
 import { Button, Tooltip } from 'antd'
-import { PanelLeftClose, PanelRightClose } from 'lucide-react'
+import { PanelLeftClose, PanelRightClose, Radio } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import logoUrl from '../../../../../build/icon.svg'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
@@ -24,6 +24,7 @@ const Titlebar = ({ onSettingsChange }: TitlebarProps): React.JSX.Element => {
   const sidebarOpen = useAppSelector((state) => state.app.sessionsSidebarOpen)
   const navbarPosition = useAppSelector((state) => state.app.settings.navbarPosition)
   const platform = useAppSelector((state) => state.app.platform)
+  const earthquakeStatus = useAppSelector((state) => state.app.earthquakeStatus)
   const { t } = useTranslation()
 
   return (
@@ -52,6 +53,32 @@ const Titlebar = ({ onSettingsChange }: TitlebarProps): React.JSX.Element => {
             />
           </Tooltip>
         )}
+      </div>
+      <div
+        className={`${styles.fcmIndicator} ${
+          earthquakeStatus.state === 'connected' && earthquakeStatus.subscribedTopics.length === 2
+            ? styles.fcmConnected
+            : earthquakeStatus.state === 'error'
+              ? styles.fcmError
+              : styles.fcmPending
+        }`}
+      >
+        <Radio size={12} />
+        <span className={styles.fcmState}>{t(`earthquake.states.${earthquakeStatus.state}`)}</span>
+        <span className={styles.fcmChannels}>
+          {earthquakeStatus.topics.map((topic) => (
+            <span
+              className={
+                earthquakeStatus.subscribedTopics.includes(topic)
+                  ? styles.channelConnected
+                  : styles.channelDisconnected
+              }
+              key={topic}
+            >
+              {topic}
+            </span>
+          ))}
+        </span>
       </div>
       <div className={styles.rightActions}>
         {navbarPosition === 'top' && (

@@ -2,7 +2,10 @@
  * Korean interface strings.
  */
 
+import { earthquakeEn } from './earthquake'
+
 const ko = {
+  earthquake: earthquakeEn,
   app: {
     name: 'Earthquake Signal',
     tagline: 'A secure desktop workspace.',
@@ -14,18 +17,18 @@ const ko = {
     cancel: '취소',
   },
   nav: {
-    sessions: '세션',
+    sessions: '지진',
     settings: '설정',
   },
   sidebar: {
-    hideSidebar: '사이드바 숨기기',
-    showSidebar: '사이드바 표시',
+    hideSidebar: '지진 숨기기',
+    showSidebar: '지진 표시',
   },
   sessions: {
-    newSession: '새 세션',
-    renameSession: '세션 이름 변경',
-    deleteAll: '모두 삭제',
-    emptyTitle: '아직 세션이 없습니다',
+    newSession: '새 지진',
+    renameSession: '지진 이름 변경',
+    deleteAll: '모든 지진 삭제',
+    emptyTitle: '아직 지진이 없습니다',
   },
   windowControls: {
     minimize: '최소화',

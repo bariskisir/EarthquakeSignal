@@ -8,6 +8,7 @@ import { Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import styles from './App.module.scss'
 import AppSidebar from '@renderer/components/app/AppSidebar'
+import FullscreenEarthquakeAlert from '@renderer/components/app/FullscreenEarthquakeAlert'
 import Titlebar from '@renderer/components/app/Titlebar'
 import { useAppInit } from '@renderer/hooks/useAppInit'
 import { useDesktopActions } from '@renderer/hooks/useDesktopActions'
@@ -80,6 +81,7 @@ const App = (): React.JSX.Element => {
           </Button>
         </div>
       )}
+      <FullscreenEarthquakeAlert />
     </div>
   )
 }

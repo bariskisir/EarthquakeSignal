@@ -4,7 +4,13 @@
 
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import { IpcChannel } from '@shared/IpcChannel'
-import type { EarthquakeSignalApi, UpdateStateEvent } from '@shared/types'
+import type {
+  EarthquakeNotificationOpenEvent,
+  EarthquakeReceivedEvent,
+  EarthquakeServiceStatus,
+  EarthquakeSignalApi,
+  UpdateStateEvent,
+} from '@shared/types'
 
 /** Subscribes to one approved event and returns a cleanup callback. */
 const subscribe = <T>(channel: IpcChannel, listener: (payload: T) => void): (() => void) => {
@@ -18,14 +24,14 @@ const api: EarthquakeSignalApi = {
   bootstrap: () => ipcRenderer.invoke(IpcChannel.AppBootstrap),
   /** Atomically merges validated application settings fields. */
   saveSettings: (patch) => ipcRenderer.invoke(IpcChannel.SettingsSave, patch),
-  /** Creates one empty local session. */
-  createSession: () => ipcRenderer.invoke(IpcChannel.SessionCreate),
   /** Loads one complete local session. */
   getSession: (id) => ipcRenderer.invoke(IpcChannel.SessionGet, id),
   /** Renames one local session. */
   renameSession: (id, title) => ipcRenderer.invoke(IpcChannel.SessionRename, { id, title }),
   /** Deletes one local session. */
   deleteSession: (id) => ipcRenderer.invoke(IpcChannel.SessionDelete, id),
+  /** Deletes every local session. */
+  deleteAllSessions: () => ipcRenderer.invoke(IpcChannel.SessionDeleteAll),
   /** Changes the native always-on-top window state. */
   setAlwaysOnTop: (enabled) => ipcRenderer.invoke(IpcChannel.WindowAlwaysOnTop, enabled),
   /** Minimizes the main application window. */
@@ -48,6 +54,14 @@ const api: EarthquakeSignalApi = {
   checkForUpdates: () => ipcRenderer.invoke(IpcChannel.UpdatesCheck),
   /** Restarts and installs a downloaded update. */
   installUpdate: () => ipcRenderer.invoke(IpcChannel.UpdatesInstall),
+  /** Immediately reconnects the earthquake FCM receiver. */
+  refreshEarthquakeConnection: () => ipcRenderer.invoke(IpcChannel.EarthquakeRefresh),
+  /** Deletes and recreates the local Firebase and backend registration. */
+  resetEarthquakeRegistration: () => ipcRenderer.invoke(IpcChannel.EarthquakeResetRegistration),
+  /** Simulates one realtime or seismic-network event in the main process. */
+  testEarthquake: (kind) => ipcRenderer.invoke(IpcChannel.EarthquakeTest, kind),
+  /** Restores the main window after a fullscreen earthquake alert. */
+  dismissFullscreenEarthquake: () => ipcRenderer.invoke(IpcChannel.EarthquakeDismissFullscreen),
   /** Subscribes to updater lifecycle progress. */
   onUpdateState: (listener) => subscribe<UpdateStateEvent>(IpcChannel.UpdateState, listener),
   /** Subscribes to maximize and restore state changes. */
@@ -56,6 +70,15 @@ const api: EarthquakeSignalApi = {
   /** Subscribes to settings navigation requested by the tray menu. */
   onSettingsOpenRequested: (listener) =>
     subscribe<void>(IpcChannel.SettingsOpenRequested, listener),
+  /** Subscribes to earthquake receiver status changes. */
+  onEarthquakeStatus: (listener) =>
+    subscribe<EarthquakeServiceStatus>(IpcChannel.EarthquakeStatus, listener),
+  /** Subscribes to newly persisted earthquake sessions. */
+  onEarthquakeReceived: (listener) =>
+    subscribe<EarthquakeReceivedEvent>(IpcChannel.EarthquakeReceived, listener),
+  /** Subscribes to a native earthquake notification activation. */
+  onEarthquakeNotificationOpened: (listener) =>
+    subscribe<EarthquakeNotificationOpenEvent>(IpcChannel.EarthquakeNotificationOpened, listener),
 }
 
 contextBridge.exposeInMainWorld('app', api)

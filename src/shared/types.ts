@@ -9,16 +9,19 @@ export const NAVBAR_POSITIONS = ['left', 'top'] as const
 export const PAGE_ZOOM_LIMITS = { min: 0.5, max: 2, step: 0.1, default: 1 } as const
 export const TIME_FORMATS = ['24-hour', '12-hour'] as const
 export const LOG_LEVELS = ['error', 'warn', 'info', 'debug', 'verbose'] as const
+export const EARTHQUAKE_NOTIFICATION_PRESENTATIONS = ['fullscreen', 'normal'] as const
 
 export type AppLocale = (typeof APP_LOCALES)[number]
 export type ThemeMode = (typeof THEME_MODES)[number]
 export type NavbarPosition = (typeof NAVBAR_POSITIONS)[number]
 export type TimeFormat = (typeof TIME_FORMATS)[number]
 export type LogLevel = (typeof LOG_LEVELS)[number]
+export type EarthquakeNotificationPresentation =
+  (typeof EARTHQUAKE_NOTIFICATION_PRESENTATIONS)[number]
 export type DesktopPlatform = 'win32' | 'darwin' | 'linux'
 
 export interface AppSettings {
-  settingsRevision: 1
+  settingsRevision: 3
   uiLanguage: AppLocale
   theme: ThemeMode
   navbarPosition: NavbarPosition
@@ -30,6 +33,16 @@ export interface AppSettings {
   minimizeToTrayOnClose: boolean
   autoUpdate: boolean
   logLevel: LogLevel
+  earthquakeLatitude: number
+  earthquakeLongitude: number
+  fcmCheckIntervalMinutes: number
+  realtimeAlertsEnabled: boolean
+  realtimeSilentWhenMild: boolean
+  realtimeNotificationPresentation: EarthquakeNotificationPresentation
+  seismicNotificationsEnabled: boolean
+  seismicMinimumMagnitude: number
+  seismicMaximumDistanceKm: number
+  seismicNotificationPresentation: EarthquakeNotificationPresentation
 }
 
 export type AppSettingsPatch = {
@@ -37,7 +50,7 @@ export type AppSettingsPatch = {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  settingsRevision: 1,
+  settingsRevision: 3,
   uiLanguage: 'en',
   theme: 'system',
   navbarPosition: 'top',
@@ -49,6 +62,36 @@ export const DEFAULT_SETTINGS: AppSettings = {
   minimizeToTrayOnClose: true,
   autoUpdate: true,
   logLevel: 'info',
+  earthquakeLatitude: 40,
+  earthquakeLongitude: 32,
+  fcmCheckIntervalMinutes: 480,
+  realtimeAlertsEnabled: true,
+  realtimeSilentWhenMild: true,
+  realtimeNotificationPresentation: 'fullscreen',
+  seismicNotificationsEnabled: true,
+  seismicMinimumMagnitude: 3,
+  seismicMaximumDistanceKm: 1_000,
+  seismicNotificationPresentation: 'normal',
+}
+
+export type EarthquakeEventKind = 'realtime' | 'seismic-network'
+
+/** Represents one normalized earthquake push message stored as a local session. */
+export interface EarthquakeEvent {
+  id: string
+  kind: EarthquakeEventKind
+  source: string
+  latitude: number
+  longitude: number
+  receivedAt: string
+  occurredAt?: string | undefined
+  magnitude?: number | undefined
+  depthKm?: number | undefined
+  place?: string | undefined
+  revision?: number | undefined
+  estimatedIntensity?: number | undefined
+  distanceKm?: number | undefined
+  warning?: string | undefined
 }
 
 export interface SessionDocument {
@@ -57,6 +100,7 @@ export interface SessionDocument {
   isDefaultTitle: boolean
   createdAt: string
   updatedAt: string
+  earthquake?: EarthquakeEvent | undefined
 }
 
 export interface SessionSummary {
@@ -70,9 +114,45 @@ export interface SessionSummary {
 export interface BootstrapPayload {
   settings: AppSettings
   sessions: SessionSummary[]
-  currentSession: SessionDocument
+  currentSession: SessionDocument | null
   platform: DesktopPlatform
   version: string
+  earthquakeStatus: EarthquakeServiceStatus
+}
+
+export type EarthquakeConnectionState =
+  'not-configured' | 'connecting' | 'connected' | 'disconnected' | 'error'
+
+/** Reports FCM registration and the next user-configured health check. */
+export interface EarthquakeServiceStatus {
+  state: EarthquakeConnectionState
+  topics: string[]
+  subscribedTopics: string[]
+  token?: string
+  backendUserId?: string
+  firebaseInstallationId?: string
+  gcmAndroidId?: string
+  gcmAppId?: string
+  firebaseProjectId?: string
+  packageId?: string
+  installationCreatedAt?: string
+  authTokenExpiresAt?: string
+  persistentMessageCount?: number
+  lastCheckedAt?: string
+  nextCheckAt?: string
+  message?: string
+}
+
+/** Delivers a newly persisted earthquake and its notification presentation. */
+export interface EarthquakeReceivedEvent {
+  session: SessionDocument
+  presentation: EarthquakeNotificationPresentation | 'none'
+  shouldAlarm: boolean
+}
+
+/** Identifies the stored event and home view requested by a clicked notification. */
+export interface EarthquakeNotificationOpenEvent {
+  sessionId: string
 }
 
 export interface DeleteSessionResult {
@@ -100,14 +180,14 @@ export interface EarthquakeSignalApi {
   bootstrap(): Promise<BootstrapPayload>
   /** Atomically merges and persists validated application settings fields. */
   saveSettings(patch: AppSettingsPatch): Promise<AppSettings>
-  /** Creates and persists one empty session workspace. */
-  createSession(): Promise<SessionDocument>
   /** Loads one complete session. */
   getSession(id: string): Promise<SessionDocument>
   /** Renames one session and returns the updated document. */
   renameSession(id: string, title: string): Promise<SessionDocument>
-  /** Deletes one session while preserving the last-workspace invariant. */
+  /** Deletes one session. */
   deleteSession(id: string): Promise<DeleteSessionResult>
+  /** Deletes every locally persisted session. */
+  deleteAllSessions(): Promise<void>
   /** Changes the native always-on-top state. */
   setAlwaysOnTop(enabled: boolean): Promise<void>
   /** Minimizes the main application window. */
@@ -130,10 +210,26 @@ export interface EarthquakeSignalApi {
   checkForUpdates(): Promise<void>
   /** Restarts and installs a downloaded update. */
   installUpdate(): Promise<void>
+  /** Reconnects FCM and refreshes the token/topic gateway immediately. */
+  refreshEarthquakeConnection(): Promise<EarthquakeServiceStatus>
+  /** Deletes the local FCM identity and creates a completely new registration. */
+  resetEarthquakeRegistration(): Promise<EarthquakeServiceStatus>
+  /** Simulates one event through the production persistence and notification pipeline. */
+  testEarthquake(kind: EarthquakeEventKind): Promise<SessionDocument>
+  /** Closes the renderer alert and restores the main window from fullscreen. */
+  dismissFullscreenEarthquake(): Promise<void>
   /** Subscribes to updater lifecycle events. */
   onUpdateState(listener: (event: UpdateStateEvent) => void): () => void
   /** Subscribes to native maximize and restore state changes. */
   onWindowMaximizedChange(listener: (maximized: boolean) => void): () => void
   /** Subscribes to settings navigation requested from native desktop UI. */
   onSettingsOpenRequested(listener: () => void): () => void
+  /** Subscribes to FCM lifecycle status updates. */
+  onEarthquakeStatus(listener: (status: EarthquakeServiceStatus) => void): () => void
+  /** Subscribes to newly received and persisted earthquakes. */
+  onEarthquakeReceived(listener: (event: EarthquakeReceivedEvent) => void): () => void
+  /** Subscribes to a native earthquake notification activation. */
+  onEarthquakeNotificationOpened(
+    listener: (event: EarthquakeNotificationOpenEvent) => void,
+  ): () => void
 }

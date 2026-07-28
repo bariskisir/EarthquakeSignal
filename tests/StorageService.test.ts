@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import StorageService from '../src/main/services/StorageService'
+import type { EarthquakeEvent } from '../src/shared/types'
 
 let rootPath = ''
 let storage: StorageService
@@ -39,13 +40,19 @@ describe('StorageService', () => {
     await expect(storage.getSession(created.id)).resolves.toEqual(renamed)
   })
 
-  it('preserves the final session workspace', async () => {
+  it('allows the final session to be deleted', async () => {
     const only = await storage.createSession()
-    await expect(storage.deleteSession(only.id)).resolves.toEqual({ deleted: false })
+    await expect(storage.deleteSession(only.id)).resolves.toEqual({ deleted: true })
+    expect(await storage.listSessions()).toHaveLength(0)
+  })
 
-    const second = await storage.createSession()
-    await expect(storage.deleteSession(second.id)).resolves.toEqual({ deleted: true })
-    expect(await storage.listSessions()).toHaveLength(1)
+  it('deletes all sessions in one operation', async () => {
+    await storage.createSession('First')
+    await storage.createSession('Second')
+
+    await storage.deleteAllSessions()
+
+    expect(await storage.listSessions()).toHaveLength(0)
   })
 
   it('drops obsolete fields while loading older session documents', async () => {
@@ -63,5 +70,27 @@ describe('StorageService', () => {
     const saved = await storage.updateSettings({ theme: 'light', logLevel: 'debug' })
     expect(saved).toMatchObject({ theme: 'light', logLevel: 'debug' })
     await expect(storage.loadSettings()).resolves.toEqual(saved)
+  })
+
+  it('persists an earthquake and updates later revisions in the same session', async () => {
+    const first: EarthquakeEvent = {
+      id: 'event-42',
+      kind: 'realtime',
+      source: 'test',
+      latitude: 39.9,
+      longitude: 32.8,
+      receivedAt: '2026-01-01T00:00:00.000Z',
+      revision: 1,
+      estimatedIntensity: 2.4,
+    }
+    const created = await storage.upsertEarthquakeSession(first, 'Realtime Ankara')
+    const updated = await storage.upsertEarthquakeSession(
+      { ...first, receivedAt: '2026-01-01T00:01:00.000Z', revision: 2 },
+      'Realtime Ankara update',
+    )
+
+    expect(updated.id).toBe(created.id)
+    expect(updated.earthquake?.revision).toBe(2)
+    expect(await storage.listSessions()).toHaveLength(1)
   })
 })

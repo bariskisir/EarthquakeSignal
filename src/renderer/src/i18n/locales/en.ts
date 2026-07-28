@@ -2,7 +2,10 @@
  * English interface strings.
  */
 
+import { earthquakeEn } from './earthquake'
+
 const en = {
+  earthquake: earthquakeEn,
   app: {
     name: 'Earthquake Signal',
     tagline: 'A secure desktop workspace.',
@@ -14,18 +17,18 @@ const en = {
     cancel: 'Cancel',
   },
   nav: {
-    sessions: 'Sessions',
+    sessions: 'Earthquakes',
     settings: 'Settings',
   },
   sidebar: {
-    hideSidebar: 'Hide sessions',
-    showSidebar: 'Show sessions',
+    hideSidebar: 'Hide earthquakes',
+    showSidebar: 'Show earthquakes',
   },
   sessions: {
-    newSession: 'New Session',
-    renameSession: 'Rename session',
-    deleteAll: 'Delete all sessions',
-    emptyTitle: 'No sessions yet',
+    newSession: 'New earthquake',
+    renameSession: 'Rename earthquake',
+    deleteAll: 'Delete all earthquakes',
+    emptyTitle: 'No earthquakes yet',
   },
   windowControls: {
     minimize: 'Minimize',
@@ -43,9 +46,10 @@ const en = {
     interfaceLanguage: 'Interface language',
     interfaceLanguageDescription: 'Choose the language used by the application.',
     timeFormat: 'Time format',
-    timeFormatDescription: 'Choose how session times are displayed.',
+    timeFormatDescription: 'Choose how earthquake times are displayed.',
     startOnStartup: 'Start on startup',
-    startOnStartupDescription: 'Launch Earthquake Signal automatically when you sign in.',
+    startOnStartupDescription:
+      'Launch Earthquake Signal automatically in the system tray when you sign in.',
     timeFormats: {
       '24-hour': '24-hour',
       '12-hour': '12-hour',

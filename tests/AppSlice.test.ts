@@ -34,6 +34,11 @@ describe('appSlice', () => {
       currentSession: session('00000000-0000-4000-8000-000000000001'),
       platform: 'linux',
       version: '1.0.0',
+      earthquakeStatus: {
+        state: 'connected',
+        topics: ['global', 'x21y12'],
+        subscribedTopics: ['global', 'x21y12'],
+      },
     }
     const hydrated = reducer(undefined, hydrate(payload))
     const repeated = reducer(hydrated, hydrate({ ...payload, version: '2.0.0' }))

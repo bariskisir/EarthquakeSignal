@@ -105,9 +105,9 @@ export default class LoggerService {
     if (details === undefined) return ''
     if (details instanceof Error)
       return `${details.name}: ${details.message}\n${details.stack ?? ''}`.trim()
-    if (typeof details === 'string') return details.slice(0, 8_000)
+    if (typeof details === 'string') return details
     try {
-      return JSON.stringify(details).slice(0, 8_000)
+      return JSON.stringify(details)
     } catch {
       if (
         typeof details === 'number' ||
@@ -115,7 +115,7 @@ export default class LoggerService {
         typeof details === 'bigint' ||
         typeof details === 'symbol'
       ) {
-        return String(details).slice(0, 8_000)
+        return String(details)
       }
       return `[Unserializable ${typeof details}]`
     }

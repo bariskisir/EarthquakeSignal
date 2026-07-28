@@ -2,7 +2,10 @@
  * German interface strings.
  */
 
+import { earthquakeEn } from './earthquake'
+
 const de = {
+  earthquake: earthquakeEn,
   app: {
     name: 'Earthquake Signal',
     tagline: 'A secure desktop workspace.',
@@ -14,18 +17,18 @@ const de = {
     cancel: 'Abbrechen',
   },
   nav: {
-    sessions: 'Sitzungen',
+    sessions: 'Erdbeben',
     settings: 'Einstellungen',
   },
   sidebar: {
-    hideSidebar: 'Seitenleiste ausblenden',
-    showSidebar: 'Seitenleiste anzeigen',
+    hideSidebar: 'Erdbeben ausblenden',
+    showSidebar: 'Erdbeben anzeigen',
   },
   sessions: {
-    newSession: 'Neue Sitzung',
-    renameSession: 'Sitzung umbenennen',
-    deleteAll: 'Alle löschen',
-    emptyTitle: 'Noch keine Sitzungen',
+    newSession: 'Neues Erdbeben',
+    renameSession: 'Erdbeben umbenennen',
+    deleteAll: 'Alle Erdbeben löschen',
+    emptyTitle: 'Noch keine Erdbeben',
   },
   windowControls: {
     minimize: 'Minimieren',

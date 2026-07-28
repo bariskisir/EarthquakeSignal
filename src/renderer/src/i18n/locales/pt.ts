@@ -2,7 +2,10 @@
  * Portuguese interface strings.
  */
 
+import { earthquakeEn } from './earthquake'
+
 const pt = {
+  earthquake: earthquakeEn,
   app: {
     name: 'Earthquake Signal',
     tagline: 'A secure desktop workspace.',
@@ -14,18 +17,18 @@ const pt = {
     cancel: 'Cancelar',
   },
   nav: {
-    sessions: 'Sessões',
+    sessions: 'Sismos',
     settings: 'Definições',
   },
   sidebar: {
-    hideSidebar: 'Ocultar barra lateral',
-    showSidebar: 'Mostrar barra lateral',
+    hideSidebar: 'Ocultar sismos',
+    showSidebar: 'Mostrar sismos',
   },
   sessions: {
-    newSession: 'Nova sessão',
-    renameSession: 'Renomear sessão',
-    deleteAll: 'Eliminar todos',
-    emptyTitle: 'Ainda não há sessões',
+    newSession: 'Novo sismo',
+    renameSession: 'Renomear sismo',
+    deleteAll: 'Eliminar todos os sismos',
+    emptyTitle: 'Ainda não há sismos',
   },
   windowControls: {
     minimize: 'Minimizar',

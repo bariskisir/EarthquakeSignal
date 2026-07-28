@@ -2,7 +2,10 @@
  * Russian interface strings.
  */
 
+import { earthquakeEn } from './earthquake'
+
 const ru = {
+  earthquake: earthquakeEn,
   app: {
     name: 'Earthquake Signal',
     tagline: 'A secure desktop workspace.',
@@ -14,18 +17,18 @@ const ru = {
     cancel: 'Отмена',
   },
   nav: {
-    sessions: 'Сессии',
+    sessions: 'Землетрясения',
     settings: 'Настройки',
   },
   sidebar: {
-    hideSidebar: 'Скрыть боковую панель',
-    showSidebar: 'Показать боковую панель',
+    hideSidebar: 'Скрыть землетрясения',
+    showSidebar: 'Показать землетрясения',
   },
   sessions: {
-    newSession: 'Новая сессия',
-    renameSession: 'Переименовать сессию',
-    deleteAll: 'Удалить всё',
-    emptyTitle: 'Сессий пока нет',
+    newSession: 'Новое землетрясение',
+    renameSession: 'Переименовать землетрясение',
+    deleteAll: 'Удалить все землетрясения',
+    emptyTitle: 'Землетрясений пока нет',
   },
   windowControls: {
     minimize: 'Свернуть',

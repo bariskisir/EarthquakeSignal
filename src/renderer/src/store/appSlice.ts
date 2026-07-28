@@ -7,13 +7,14 @@ import {
   DEFAULT_SETTINGS,
   type AppSettings,
   type BootstrapPayload,
+  type EarthquakeServiceStatus,
   type SessionDocument,
   type SessionSummary,
   type UpdateStateEvent,
 } from '@shared/types'
 
 export type AppPage = 'home' | 'settings'
-export type SettingsSection = 'general' | 'display' | 'updates' | 'about' | 'logging'
+export type SettingsSection = 'general' | 'earthquake' | 'display' | 'updates' | 'about' | 'logging'
 
 export interface AppState {
   initialized: boolean
@@ -26,6 +27,8 @@ export interface AppState {
   currentSession: SessionDocument | null
   update: UpdateStateEvent
   sessionsSidebarOpen: boolean
+  earthquakeStatus: EarthquakeServiceStatus
+  fullscreenEarthquake: SessionDocument | null
 }
 
 const initialState: AppState = {
@@ -39,6 +42,8 @@ const initialState: AppState = {
   currentSession: null,
   update: { state: 'idle' },
   sessionsSidebarOpen: true,
+  earthquakeStatus: { state: 'disconnected', topics: [], subscribedTopics: [] },
+  fullscreenEarthquake: null,
 }
 
 const appSlice = createSlice({
@@ -54,6 +59,7 @@ const appSlice = createSlice({
       state.version = action.payload.version
       state.sessions = action.payload.sessions
       state.currentSession = action.payload.currentSession
+      state.earthquakeStatus = action.payload.earthquakeStatus
     },
     /** Opens a top-level application page. */
     setPage(state, action: PayloadAction<AppPage>) {
@@ -84,6 +90,10 @@ const appSlice = createSlice({
     removeSessionSummary(state, action: PayloadAction<string>) {
       state.sessions = state.sessions.filter((item) => item.id !== action.payload)
     },
+    /** Replaces the complete session summary list. */
+    setSessions(state, action: PayloadAction<SessionSummary[]>) {
+      state.sessions = action.payload
+    },
     /** Sets the session displayed in the main workspace. */
     setCurrentSession(state, action: PayloadAction<SessionDocument | null>) {
       state.currentSession = action.payload
@@ -102,6 +112,14 @@ const appSlice = createSlice({
     setSessionsSidebarOpen(state, action: PayloadAction<boolean>) {
       state.sessionsSidebarOpen = action.payload
     },
+    /** Applies FCM receiver status without affecting persisted settings. */
+    setEarthquakeStatus(state, action: PayloadAction<EarthquakeServiceStatus>) {
+      state.earthquakeStatus = action.payload
+    },
+    /** Shows or dismisses the application-level fullscreen earthquake warning. */
+    setFullscreenEarthquake(state, action: PayloadAction<SessionDocument | null>) {
+      state.fullscreenEarthquake = action.payload
+    },
   },
 })
 
@@ -113,9 +131,12 @@ export const {
   replaceSessionSummary,
   setCurrentSession,
   setPage,
+  setSessions,
   setSettings,
   setSettingsSection,
   setSessionsSidebarOpen,
+  setEarthquakeStatus,
+  setFullscreenEarthquake,
   setUpdateState,
 } = appSlice.actions
 

@@ -8,11 +8,11 @@ import { useTranslation } from 'react-i18next'
 import { createLogger } from '@renderer/services/LoggerService'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import {
-  addSessionSummary,
   removeSessionSummary,
   replaceCurrentSession,
   replaceSessionSummary,
   setCurrentSession,
+  setSessions,
 } from '@renderer/store/appSlice'
 import { toSessionSummary } from '@renderer/utils/formatters'
 
@@ -42,19 +42,6 @@ export const useSessionActions = () => {
     },
     [dispatch, message, t],
   )
-
-  /** Creates and selects a new session workspace. */
-  const createSession = useCallback(async (): Promise<void> => {
-    const revision = ++selectionRevision
-    try {
-      const session = await window.app.createSession()
-      dispatch(addSessionSummary(toSessionSummary(session)))
-      if (revision === selectionRevision) dispatch(setCurrentSession(session))
-    } catch (error) {
-      logger.error('Session workspace could not be created.', error)
-      void message.error(t('errors.generic'))
-    }
-  }, [dispatch, message, t])
 
   /** Renames a session and synchronizes the active document and summary. */
   const renameSession = useCallback(
@@ -94,5 +81,20 @@ export const useSessionActions = () => {
     [currentSessionId, dispatch, sessions, message, t],
   )
 
-  return { createSession, deleteSession, openSession, renameSession }
+  /** Deletes all locally stored sessions and clears the active selection. */
+  const deleteAllSessions = useCallback(async (): Promise<boolean> => {
+    const revision = ++selectionRevision
+    try {
+      await window.app.deleteAllSessions()
+      dispatch(setSessions([]))
+      if (revision === selectionRevision) dispatch(setCurrentSession(null))
+      return true
+    } catch (error) {
+      logger.error('Sessions could not be deleted.', error)
+      void message.error(t('errors.generic'))
+      return false
+    }
+  }, [dispatch, message, t])
+
+  return { deleteAllSessions, deleteSession, openSession, renameSession }
 }
