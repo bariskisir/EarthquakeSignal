@@ -240,7 +240,7 @@ export default class GitHubReleaseClient {
       downloadUrl.password ||
       downloadUrl.search ||
       downloadUrl.hash ||
-      !normalizedPath.startsWith(RELEASE_DOWNLOAD_PATH_PREFIX) ||
+      !normalizedPath.startsWith(RELEASE_DOWNLOAD_PATH_PREFIX.toLowerCase()) ||
       !hasExpectedFileName
     ) {
       throw new Error('GitHub returned an untrusted update download URL.')
