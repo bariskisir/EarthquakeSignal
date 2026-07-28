@@ -53,7 +53,7 @@ jobs:
         with:
           name: windows-builds
           path: |
-            release/transcript-*-windows-*-setup.exe
+            release/earthquake-signal-*-windows-*-setup.exe
           if-no-files-found: error
 
   release-linux:
@@ -91,7 +91,7 @@ jobs:
         with:
           name: linux-builds
           path: |
-            release/Transcript-*-linux-*.AppImage
+            release/Earthquake-Signal-*-linux-*.AppImage
           if-no-files-found: error
 
   publish-release:
@@ -117,10 +117,10 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
-          name: Transcript ${{ github.ref_name }}
+          name: Earthquake Signal ${{ github.ref_name }}
           files: |
-            release/transcript-*-windows-*-setup.exe
-            release/Transcript-*-linux-*.AppImage
+            release/earthquake-signal-*-windows-*-setup.exe
+            release/Earthquake-Signal-*-linux-*.AppImage
           fail_on_unmatched_files: true
           generate_release_notes: true
           draft: false

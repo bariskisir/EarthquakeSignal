@@ -1,58 +1,31 @@
 /**
- * Verifies the shared date and duration formatting helpers.
+ * Verifies session metadata formatting helpers.
  */
 
 import { describe, expect, it } from 'vitest'
-import { formatDate, formatDuration } from '../src/renderer/src/utils/formatters'
+import { formatDate, toSessionSummary } from '../src/renderer/src/utils/formatters'
 
-describe('formatDuration', () => {
-  it('formats zero milliseconds as 00:00', () => {
-    expect(formatDuration(0)).toBe('00:00')
+describe('formatDate', () => {
+  it('formats 24-hour dates', () => {
+    const result = formatDate('2026-01-02T13:05:00.000Z', '24-hour')
+    expect(result).toMatch(/^02\.01\.26 \d{2}:\d{2}$/)
   })
 
-  it('formats less than one minute as mm:ss', () => {
-    expect(formatDuration(45_000)).toBe('00:45')
-  })
-
-  it('formats exactly one minute as 01:00', () => {
-    expect(formatDuration(60_000)).toBe('01:00')
-  })
-
-  it('formats over an hour as hh:mm:ss', () => {
-    expect(formatDuration(3_660_000)).toBe('01:01:00')
-  })
-
-  it('handles negative input by clamping to zero', () => {
-    expect(formatDuration(-5_000)).toBe('00:00')
+  it('formats 12-hour dates with a period', () => {
+    const result = formatDate('2026-01-02T13:05:00.000Z', '12-hour')
+    expect(result).toMatch(/^02\.01\.26 \d{2}:\d{2} (AM|PM)$/)
   })
 })
 
-describe('formatDate', () => {
-  const isoDate = '2026-12-25T14:30:00.000Z'
-
-  it('formats a 24-hour timestamp without an AM/PM suffix', () => {
-    const result = formatDate(isoDate, '24-hour')
-    expect(result).not.toContain('AM')
-    expect(result).not.toContain('PM')
-    expect(result).toMatch(/^\d{2}\.\d{2}\.\d{2} \d{2}:\d{2}$/)
-  })
-
-  it('formats a 12-hour timestamp with an AM or PM suffix', () => {
-    const result = formatDate(isoDate, '12-hour')
-    expect(result).toMatch(/^\d{2}\.\d{2}\.\d{2} \d{2}:\d{2} (AM|PM)$/)
-  })
-
-  it('formats midnight as 12:xx AM in 12-hour mode', () => {
-    const date = new Date(2026, 11, 25, 0, 15, 0) // midnight local time
-    const result = formatDate(date.toISOString(), '12-hour')
-    expect(result).toContain('12:')
-    expect(result).toContain('AM')
-  })
-
-  it('formats noon as 12:xx PM in 12-hour mode', () => {
-    const date = new Date(2026, 11, 25, 12, 0, 0) // noon local time
-    const result = formatDate(date.toISOString(), '12-hour')
-    expect(result).toContain('12:')
-    expect(result).toContain('PM')
+describe('toSessionSummary', () => {
+  it('copies generic session metadata', () => {
+    const session = {
+      id: '00000000-0000-4000-8000-000000000001',
+      title: 'Session',
+      isDefaultTitle: false,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-02T00:00:00.000Z',
+    }
+    expect(toSessionSummary(session)).toEqual(session)
   })
 })

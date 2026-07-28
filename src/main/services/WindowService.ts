@@ -7,8 +7,6 @@ import { app, BrowserWindow } from 'electron'
 import { isTrustedRendererNavigation } from '../security/RendererNavigationPolicy'
 import type LoggerService from './LoggerService'
 
-const ALLOWED_MEDIA_PERMISSIONS = new Set(['media', 'display-capture', 'speaker-selection'])
-
 export default class WindowService {
   private mainWindow: BrowserWindow | null = null
   private readonly rendererPath = join(__dirname, '../renderer/index.html')
@@ -27,7 +25,7 @@ export default class WindowService {
       minHeight: 300,
       show: false,
       backgroundColor: '#181818',
-      title: 'Transcript',
+      title: 'Earthquake Signal',
       ...(process.platform === 'darwin'
         ? {
             titleBarStyle: 'hidden' as const,
@@ -47,7 +45,6 @@ export default class WindowService {
     this.mainWindow = window
     this.configureRendererDiagnostics(window, logger)
     this.configureSecurity(window)
-    this.configureMediaAccess(window)
     window.once('ready-to-show', () => window.show())
     window.once('closed', () => {
       if (this.mainWindow === window) this.mainWindow = null
@@ -115,26 +112,6 @@ export default class WindowService {
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
     window.webContents.on('will-navigate', (event, url) => {
       if (!this.isTrustedRendererUrl(url)) event.preventDefault()
-    })
-  }
-
-  /** Allows microphone and Windows loopback capture only for the main renderer. */
-  private configureMediaAccess(window: BrowserWindow): void {
-    const appSession = window.webContents.session
-    appSession.setPermissionRequestHandler((webContents, permission, callback) => {
-      callback(
-        webContents.id === window.webContents.id && ALLOWED_MEDIA_PERMISSIONS.has(permission),
-      )
-    })
-    appSession.setPermissionCheckHandler((webContents, permission) => {
-      return webContents?.id === window.webContents.id && ALLOWED_MEDIA_PERMISSIONS.has(permission)
-    })
-    appSession.setDisplayMediaRequestHandler((request, callback) => {
-      if (request.frame !== window.webContents.mainFrame || process.platform !== 'win32') {
-        callback({})
-        return
-      }
-      callback({ video: request.frame, audio: 'loopback' })
     })
   }
 

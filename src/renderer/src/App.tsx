@@ -1,5 +1,5 @@
 /**
- * Composes the reusable desktop shell, Transcript workspace, settings, and update notice.
+ * Composes the reusable desktop shell, workspace, settings, and update notice.
  */
 
 import { lazy, Suspense } from 'react'
@@ -25,7 +25,6 @@ const App = (): React.JSX.Element => {
   useAppInit()
   const initialized = useAppSelector((state) => state.app.initialized)
   const page = useAppSelector((state) => state.app.page)
-  const compactMode = useAppSelector((state) => state.app.compactMode)
   const navbarPosition = useAppSelector((state) => state.app.settings.navbarPosition)
   const update = useAppSelector((state) => state.app.update)
   const desktopActions = useDesktopActions()
@@ -45,7 +44,7 @@ const App = (): React.JSX.Element => {
     <div className={styles.shell}>
       <Titlebar onSettingsChange={settingsActions.saveSettings} />
       <div className={styles.body}>
-        {!compactMode && navbarPosition === 'left' && (
+        {navbarPosition === 'left' && (
           <AppSidebar onSettingsChange={settingsActions.saveSettings} />
         )}
         <div className={styles.workspace}>

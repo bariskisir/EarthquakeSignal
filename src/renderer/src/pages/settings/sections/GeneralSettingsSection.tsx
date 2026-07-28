@@ -2,7 +2,7 @@
  * Renders interface, clock, and AppData logging preferences.
  */
 
-import { Select } from 'antd'
+import { Select, Switch } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { APP_LOCALES, TIME_FORMATS, type AppLocale, type TimeFormat } from '@shared/types'
 import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
@@ -55,6 +55,18 @@ const GeneralSettingsSection = (): React.JSX.Element => {
               onChange={(timeFormat: TimeFormat) =>
                 void settingsActions.saveSettings({ timeFormat })
               }
+            />
+          </div>
+        </div>
+        <div className={styles.settingRow}>
+          <SettingLabel
+            title={t('settings.startOnStartup')}
+            description={t('settings.startOnStartupDescription')}
+          />
+          <div className={styles.settingControl}>
+            <Switch
+              checked={settings.startOnStartup}
+              onChange={(startOnStartup) => void settingsActions.saveSettings({ startOnStartup })}
             />
           </div>
         </div>

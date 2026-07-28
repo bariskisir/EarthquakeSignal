@@ -34,18 +34,11 @@ describe('IpcChannel', () => {
     expect(channels).toContain('settings:save')
   })
 
-  it('includes the required credential channels', () => {
-    expect(channels).toContain('credentials:save')
-    expect(channels).toContain('credentials:get')
-    expect(channels).toContain('credentials:delete')
-  })
-
   it('includes the required session channels', () => {
     expect(channels).toContain('session:create')
     expect(channels).toContain('session:get')
     expect(channels).toContain('session:rename')
     expect(channels).toContain('session:delete')
-    expect(channels).toContain('session:export')
   })
 
   it('includes the required window channels', () => {
@@ -75,8 +68,7 @@ describe('IpcChannel', () => {
     expect(channels).toContain('updates:install')
   })
 
-  it('includes the required error and update-state events', () => {
-    expect(channels).toContain('event:error')
+  it('includes the required update and navigation events', () => {
     expect(channels).toContain('event:update-state')
     expect(channels).toContain('event:settings-open-requested')
   })
