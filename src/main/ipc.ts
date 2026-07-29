@@ -119,6 +119,7 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     services.tray.applySettings(savedSettings)
     services.logger.setLevel(savedSettings.logLevel)
     services.earthquake.applySettings(savedSettings)
+    services.updater.applySettings(savedSettings)
     return savedSettings
   })
   ipcMain.handle(IpcChannel.SessionGet, async (event, input: unknown) => {

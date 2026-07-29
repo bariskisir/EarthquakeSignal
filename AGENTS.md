@@ -7,7 +7,7 @@ user-selected location, registers an FCM-compatible push receiver with the Earth
 backend, receives both realtime alerts and normal seismic-network reports, stores every received
 event locally, and presents the event relative to the user's location on a map.
 
-The product version is `1.0.0`. The UI calls stored event history **Earthquakes**, while the
+The product version is `1.2.0`. The UI calls stored event history **Earthquakes**, while the
 internal persistence and TypeScript model continue to use the established `session` naming.
 
 ## Tech Stack

@@ -1,8 +1,10 @@
 /**
  * Verifies getInitialLanguage resolves valid locale codes, that the i18next
- * instance can be initialized, and that all 7 locale files share the same keys.
+ * instance can be initialized, and that all 10 locale files remain complete.
  */
 
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { getInitialLanguage } from '../src/renderer/src/i18n/index'
 import { APP_LOCALES, type AppLocale } from '../src/shared/types'
@@ -30,6 +32,25 @@ function collectKeys(obj: unknown, prefix = ''): string[] {
     }
   }
   return keys
+}
+
+function readLeaf(resource: Record<string, unknown>, key: string): unknown {
+  return key.split('.').reduce<unknown>((value, part) => {
+    if (typeof value !== 'object' || value === null) return undefined
+    return (value as Record<string, unknown>)[part]
+  }, resource)
+}
+
+function collectSourceFiles(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name)
+    if (entry.isDirectory()) return collectSourceFiles(path)
+    return /\.tsx?$/.test(entry.name) ? [path] : []
+  })
+}
+
+function collectInterpolationVariables(value: string): string[] {
+  return [...value.matchAll(/{{\s*([^},\s]+)[^}]*}}/g)].map((match) => match[1] ?? '').sort()
 }
 
 const locales: Record<AppLocale, Record<string, unknown>> = {
@@ -236,6 +257,72 @@ describe('locale key consistency', () => {
           (value as string).length,
           `Locale "${locale}" key "${key}" should not be empty`,
         ).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  it('all locales preserve the English interpolation variables', () => {
+    for (const [locale, resource] of Object.entries(locales)) {
+      for (const key of englishKeys) {
+        const englishValue = readLeaf(locales.en, key)
+        const localizedValue = readLeaf(resource, key)
+        expect(
+          collectInterpolationVariables(localizedValue as string),
+          `Locale "${locale}" key "${key}" should preserve interpolation variables`,
+        ).toEqual(collectInterpolationVariables(englishValue as string))
+      }
+    }
+  })
+
+  it('non-English locales translate the principal earthquake and settings copy', () => {
+    const translatedKeys = [
+      'earthquake.locationDescription',
+      'earthquake.fcmStatusDescription',
+      'earthquake.fcmNotConfiguredDescription',
+      'earthquake.topicSubscriptionFailedDescription',
+      'earthquake.resetRegistrationConfirm',
+      'earthquake.realtimeAlertsDescription',
+      'earthquake.realtimeNotificationPresentationDescription',
+      'earthquake.seismicNotificationPresentationDescription',
+      'earthquake.seismicNotificationsDescription',
+      'earthquake.minimumMagnitudeDescription',
+      'earthquake.maximumDistanceDescription',
+      'earthquake.realtimeTest',
+      'earthquake.seismicTest',
+      'earthquake.fullscreenAlert',
+      'earthquake.waitingTitle',
+      'earthquake.estimatedWaveArrival',
+      'earthquake.secondsRemaining',
+      'earthquake.waveArrived',
+      'settings.showTrayIconDescription',
+      'settings.trayUnavailable',
+      'settings.checkUpdatesOnStartupDescription',
+      'settings.unattendedUpdates',
+      'settings.unattendedUpdatesDescription',
+    ]
+
+    for (const locale of APP_LOCALES.filter((candidate) => candidate !== 'en')) {
+      for (const key of translatedKeys) {
+        expect(
+          readLeaf(locales[locale], key),
+          `Locale "${locale}" key "${key}" should not fall back to English`,
+        ).not.toBe(readLeaf(locales.en, key))
+      }
+    }
+  })
+
+  it('defines every literal translation key used by renderer source files', () => {
+    const rendererRoot = join(process.cwd(), 'src', 'renderer', 'src')
+    const translationCall = /\bt\(\s*['"]([^'"]+)['"]/g
+
+    for (const file of collectSourceFiles(rendererRoot)) {
+      const source = readFileSync(file, 'utf8')
+      for (const match of source.matchAll(translationCall)) {
+        const key = match[1] ?? ''
+        expect(
+          readLeaf(locales.en, key),
+          `Missing translation key "${key}" used in ${file}`,
+        ).toBeDefined()
       }
     }
   })

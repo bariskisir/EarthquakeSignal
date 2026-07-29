@@ -36,6 +36,11 @@ describe('parsePersistedSettings', () => {
     ).toBe(false)
   })
 
+  it('enables unattended updates by default for older settings', () => {
+    const { unattendedUpdates: _removed, ...olderSettings } = DEFAULT_SETTINGS
+    expect(parsePersistedSettings(olderSettings).unattendedUpdates).toBe(true)
+  })
+
   it('migrates revision 1 settings with Ankara earthquake defaults', () => {
     const result = parsePersistedSettings({ settingsRevision: 1, theme: 'dark' })
     expect(result).toMatchObject({
@@ -114,6 +119,9 @@ describe('settingsSchema', () => {
 describe('settingsPatchSchema', () => {
   it('accepts a non-empty generic patch', () => {
     expect(settingsPatchSchema.parse({ theme: 'light' })).toEqual({ theme: 'light' })
+    expect(settingsPatchSchema.parse({ unattendedUpdates: false })).toEqual({
+      unattendedUpdates: false,
+    })
   })
 
   it('rejects empty and unknown-only patches', () => {

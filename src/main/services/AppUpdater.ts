@@ -5,11 +5,14 @@
 import { spawn } from 'node:child_process'
 import { join } from 'node:path'
 import { app } from 'electron'
-import type { UpdateStateEvent } from '@shared/types'
+import type { AppSettings, UpdateStateEvent } from '@shared/types'
 import GitHubReleaseClient, {
+  type DownloadedRelease,
+  type DownloadProgressListener,
   isNewerVersion,
   selectWindowsInstaller,
   type GitHubRelease,
+  type GitHubReleaseAsset,
 } from './GitHubReleaseClient'
 
 /** Runs assisted NSIS updates silently and forces the updated application to reopen. */
@@ -30,6 +33,16 @@ export interface UpdateRuntime {
 export interface UpdateLogger {
   error(module: string, message: string, details?: unknown): void
   info(module: string, message: string, details?: unknown): void
+}
+
+/** Supplies release metadata and verified installer downloads to the update coordinator. */
+export interface UpdateClient {
+  getLatestRelease(): Promise<GitHubRelease>
+  downloadInstaller(
+    asset: GitHubReleaseAsset,
+    destinationDirectory: string,
+    onProgress: DownloadProgressListener,
+  ): Promise<DownloadedRelease>
 }
 
 /** Starts the NSIS installer and resolves only after Windows accepts the child process. */
@@ -63,17 +76,23 @@ export default class AppUpdater {
   private listener: ((event: UpdateStateEvent) => void) | null = null
   private checkPromise: Promise<void> | null = null
   private downloadedInstallerPath: string | null = null
+  private unattendedUpdatesEnabled = false
 
   /** Creates an updater with explicit GitHub, runtime, and logging dependencies. */
   public constructor(
     private readonly logger: UpdateLogger,
-    private readonly client = new GitHubReleaseClient(),
+    private readonly client: UpdateClient = new GitHubReleaseClient(),
     private readonly runtime = createRuntime(),
   ) {}
 
   /** Attaches the current renderer listener for update lifecycle events. */
   public initialize(listener: (event: UpdateStateEvent) => void): void {
     this.listener = listener
+  }
+
+  /** Applies the dependent automatic-check and unattended-install preferences. */
+  public applySettings(settings: Pick<AppSettings, 'autoUpdate' | 'unattendedUpdates'>): void {
+    this.unattendedUpdatesEnabled = settings.autoUpdate && settings.unattendedUpdates
   }
 
   /** Checks GitHub and downloads a matching setup executable only in packaged applications. */
@@ -149,6 +168,10 @@ export default class AppUpdater {
       sha256: downloaded.sha256,
     })
     this.emit({ state: 'downloaded', percent: 100, ...releaseMetadata })
+    if (this.unattendedUpdatesEnabled) {
+      this.logger.info('AppUpdater', 'Installing downloaded update without user interaction.')
+      await this.quitAndInstall()
+    }
   }
 
   /** Sends one serializable update state to the active renderer listener. */

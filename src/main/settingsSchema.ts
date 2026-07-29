@@ -27,6 +27,7 @@ const settingsFieldsSchema = z.object({
   showTrayIcon: z.boolean(),
   minimizeToTrayOnClose: z.boolean(),
   autoUpdate: z.boolean(),
+  unattendedUpdates: z.boolean(),
   logLevel: z.enum(LOG_LEVELS),
   earthquakeLatitude: z.number().min(-90).max(90),
   earthquakeLongitude: z.number().min(-180).max(180),

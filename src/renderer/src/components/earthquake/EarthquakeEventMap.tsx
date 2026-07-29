@@ -129,7 +129,7 @@ const EarthquakeEventMap = ({
       (earthquake.longitude + userLongitude) / 2,
     ]
     L.circleMarker(midpoint, { radius: 1, opacity: 0, fillOpacity: 0 })
-      .bindTooltip(`${distanceKm.toFixed(1)} km`, {
+      .bindTooltip(`${distanceKm.toFixed(1)} ${t('earthquake.kilometres')}`, {
         permanent: true,
         direction: 'center',
         className: styles.distanceTooltip ?? '',
@@ -206,7 +206,9 @@ const EarthquakeEventMap = ({
         <span>
           <i className={styles.earthquakeDot} /> {t('earthquake.earthquakeCenter')}
         </span>
-        <strong>{distanceKm.toFixed(1)} km</strong>
+        <strong>
+          {distanceKm.toFixed(1)} {t('earthquake.kilometres')}
+        </strong>
       </div>
       {earthquake.kind === 'realtime' && showWave && (
         <div className={`${styles.countdown} ${waveState.arrived ? styles.arrived : ''}`}>

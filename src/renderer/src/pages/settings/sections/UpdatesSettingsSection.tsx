@@ -57,6 +57,21 @@ const UpdatesSettingsSection = (): React.JSX.Element => {
             />
           </div>
         </div>
+        <div className={styles.settingRow}>
+          <SettingLabel
+            title={t('settings.unattendedUpdates')}
+            description={t('settings.unattendedUpdatesDescription')}
+          />
+          <div className={styles.settingControl}>
+            <Switch
+              checked={settings.unattendedUpdates}
+              disabled={!settings.autoUpdate}
+              onChange={(unattendedUpdates) =>
+                void settingsActions.saveSettings({ unattendedUpdates })
+              }
+            />
+          </div>
+        </div>
         <div className={`${styles.settingRow} ${styles.updateRow}`}>
           <SettingLabel title={updateStatus} description={t('settings.version', { version })} />
           <div className={styles.settingControl}>

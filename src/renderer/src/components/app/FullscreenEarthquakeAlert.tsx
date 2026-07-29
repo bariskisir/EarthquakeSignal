@@ -64,7 +64,11 @@ const FullscreenEarthquakeAlert = (): React.JSX.Element | null => {
             {t(`earthquake.intensityLabels.${getIntensityLabel(earthquake.estimatedIntensity)}`)}
           </p>
         )}
-        {earthquake.distanceKm !== undefined && <p>{earthquake.distanceKm.toFixed(0)} km</p>}
+        {earthquake.distanceKm !== undefined && (
+          <p>
+            {earthquake.distanceKm.toFixed(0)} {t('earthquake.kilometres')}
+          </p>
+        )}
       </section>
       <div className={styles.mapPanel}>
         <EarthquakeEventMap

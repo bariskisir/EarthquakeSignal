@@ -149,7 +149,7 @@ const SessionsSidebar = (): React.JSX.Element => {
                       void settingsActions.saveSettings({ earthquakeFilter: option })
                     }}
                   >
-                    {option === 'all' ? 'All' : `${option}+`}
+                    {option === 'all' ? t('sessions.all') : `${option}+`}
                   </button>
                 ))}
               </div>

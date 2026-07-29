@@ -32,6 +32,7 @@ export interface AppSettings {
   showTrayIcon: boolean
   minimizeToTrayOnClose: boolean
   autoUpdate: boolean
+  unattendedUpdates: boolean
   logLevel: LogLevel
   earthquakeLatitude: number
   earthquakeLongitude: number
@@ -62,6 +63,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   showTrayIcon: true,
   minimizeToTrayOnClose: true,
   autoUpdate: true,
+  unattendedUpdates: true,
   logLevel: 'info',
   earthquakeLatitude: 40,
   earthquakeLongitude: 32,

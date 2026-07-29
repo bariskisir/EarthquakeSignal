@@ -85,13 +85,17 @@ const HomePage = (): React.JSX.Element => {
               {earthquake.distanceKm !== undefined && (
                 <div>
                   <dt>{t('earthquake.distance')}</dt>
-                  <dd>{earthquake.distanceKm.toFixed(1)} km</dd>
+                  <dd>
+                    {earthquake.distanceKm.toFixed(1)} {t('earthquake.kilometres')}
+                  </dd>
                 </div>
               )}
               {earthquake.depthKm !== undefined && (
                 <div>
                   <dt>{t('earthquake.depth')}</dt>
-                  <dd>{earthquake.depthKm.toFixed(1)} km</dd>
+                  <dd>
+                    {earthquake.depthKm.toFixed(1)} {t('earthquake.kilometres')}
+                  </dd>
                 </div>
               )}
               <div>
