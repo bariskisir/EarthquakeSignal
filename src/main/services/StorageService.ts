@@ -46,6 +46,7 @@ const sessionSchema = z.object({
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   earthquake: earthquakeEventSchema.optional(),
+  magnitude: z.number().min(-2).max(12).optional(),
 })
 
 const DEFAULT_SESSION_TITLE = 'New Session'
@@ -162,6 +163,7 @@ export default class StorageService {
         session.isDefaultTitle = false
         session.updatedAt = earthquake.receivedAt
         session.earthquake = earthquake
+        session.magnitude = earthquake.magnitude
       })
     }
 
@@ -172,6 +174,7 @@ export default class StorageService {
       createdAt: earthquake.receivedAt,
       updatedAt: earthquake.receivedAt,
       earthquake,
+      magnitude: earthquake.magnitude,
     }
     await this.writeSession(session)
     return session
@@ -196,6 +199,14 @@ export default class StorageService {
     return documents
       .filter((document): document is SessionDocument => document !== null)
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+      .map((doc) => ({
+        id: doc.id,
+        title: doc.title,
+        isDefaultTitle: doc.isDefaultTitle,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+        magnitude: doc.earthquake?.magnitude,
+      }))
   }
 
   /** Renames a session within a serialized file operation. */

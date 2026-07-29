@@ -28,11 +28,48 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 10px 0 14px;
+  padding: 0 6px 0 10px;
   border-bottom: 0.5px solid var(--color-border);
   color: var(--color-text-1);
   font-size: 12px;
   font-weight: 650;
+}
+
+.filterGroup {
+  display: flex;
+  gap: 3px;
+}
+
+.filterButton {
+  padding: 2px 7px;
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--list-item-radius);
+  background: transparent;
+  color: var(--color-text-2);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.6;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+
+  &:hover {
+    background: var(--color-background-soft);
+    color: var(--color-text-1);
+  }
+}
+
+.filterActive {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+
+  &:hover {
+    background: var(--color-primary);
+    color: #fff;
+  }
 }
 
 .headerActions {
@@ -63,7 +100,8 @@
   border-radius: var(--list-item-radius);
 
   &:hover,
-  &.active {
+  &.active,
+  &.focused {
     border-color: var(--color-border);
     background: var(--color-background-soft);
   }
@@ -73,7 +111,8 @@
   }
 
   &:hover .deleteButton,
-  &.active .deleteButton {
+  &.active .deleteButton,
+  &.focused .deleteButton {
     visibility: visible;
   }
 }

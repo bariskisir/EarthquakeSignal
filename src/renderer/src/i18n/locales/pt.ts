@@ -5,7 +5,7 @@
 import { earthquakeEn } from './earthquake'
 
 const pt = {
-  earthquake: earthquakeEn,
+  earthquake: { ...earthquakeEn, yourLocation: 'Você', earthquakeCenter: 'Terremoto' },
   app: {
     name: 'Earthquake Signal',
     tagline: 'Sinais sísmicos em tempo real.',
@@ -121,6 +121,24 @@ const pt = {
     system: 'Sistema',
     light: 'Claro',
     dark: 'Escuro',
+  },
+  about: {
+    howItWorks: 'Como funciona',
+    howItWorksTitle: 'Como funciona o Earthquake Signal',
+    howItWorksIntro:
+      'O Earthquake Signal é a versão desktop da aplicação móvel Earthquake Network. Recebe os mesmos alertas sísmicos — sem necessidade de telemóvel.',
+    howItWorksSteps: {
+      step1: 'Escolha a sua localização no mapa — defina onde quer ser notificado.',
+      step2: 'A aplicação regista a sua localização no servidor Earthquake Network.',
+      step3:
+        'Subscreve dois canais de alerta: Global (mundial) e a sua zona local de 10×10 graus ao redor da sua localização.',
+      step4:
+        'Quando as estações sísmicas detetam um sismo, uma mensagem push viaja do servidor Earthquake Network através do Firebase até ao seu computador em segundos.',
+      step5:
+        'O sismo aparece no seu mapa. Vê a magnitude, intensidade estimada, distância e profundidade.',
+      step6:
+        'Todos os dados sísmicos são armazenados no seu computador. Sem conta, sem informações pessoais — apenas as suas coordenadas e um identificador de dispositivo aleatório são partilhados.',
+    },
   },
   errors: {
     generic: 'Ocorreu um erro.',

@@ -5,7 +5,7 @@
 import { earthquakeEn } from './earthquake'
 
 const zh = {
-  earthquake: earthquakeEn,
+  earthquake: { ...earthquakeEn, yourLocation: '你', earthquakeCenter: '地震' },
   app: {
     name: 'Earthquake Signal',
     tagline: '实时地震信号。',
@@ -120,6 +120,22 @@ const zh = {
     system: '系统',
     light: '浅色',
     dark: '深色',
+  },
+  about: {
+    howItWorks: '如何运作',
+    howItWorksTitle: 'Earthquake Signal 如何运作',
+    howItWorksIntro:
+      'Earthquake Signal 是 Earthquake Network 手机应用的桌面版本。接收相同的地震警报 — 无需手机。',
+    howItWorksSteps: {
+      step1: '在地图上选择您的位置 — 设定您希望接收通知的地点。',
+      step2: '应用将您的位置注册到 Earthquake Network 服务器。',
+      step3: '订阅两个警报频道：Global（全球）和您所在位置周围 10×10 度的本地区域。',
+      step4:
+        '当地震台站检测到地震时，推送消息会通过 Firebase 从 Earthquake Network 服务器在几秒钟内到达您的电脑。',
+      step5: '地震显示在地图上。您会看到震级、估计震感、距离和深度。',
+      step6:
+        '所有地震数据都存储在您的电脑上。无需账号，不涉及个人信息 — 仅共享您的坐标和随机设备标识符。',
+    },
   },
   errors: {
     generic: '出现错误。',

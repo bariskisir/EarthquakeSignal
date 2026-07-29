@@ -5,7 +5,7 @@
 import { earthquakeEn } from './earthquake'
 
 const ja = {
-  earthquake: earthquakeEn,
+  earthquake: { ...earthquakeEn, yourLocation: 'あなた', earthquakeCenter: '地震' },
   app: {
     name: 'Earthquake Signal',
     tagline: 'リアルタイム地震信号。',
@@ -121,6 +121,23 @@ const ja = {
     system: 'システム',
     light: 'ライト',
     dark: 'ダーク',
+  },
+  about: {
+    howItWorks: '仕組み',
+    howItWorksTitle: 'Earthquake Signal の仕組み',
+    howItWorksIntro:
+      'Earthquake Signal は Earthquake Network モバイルアプリのデスクトップ版です。スマートフォン不要で同じ地震警報を受信します。',
+    howItWorksSteps: {
+      step1: '地図上で位置を選択 — 通知を受け取りたい場所を設定します。',
+      step2: 'アプリが選択位置を Earthquake Network サーバーに登録します。',
+      step3:
+        '2つの警報チャンネルに登録：Global（全世界）と、お住まいの位置を中心とした 10×10 度のローカルゾーンです。',
+      step4:
+        '地震観測所が地震を検知すると、Earthquake Network サーバーから Firebase 経由で数秒以内にプッシュメッセージがコンピューターに届きます。',
+      step5: '地震が地図上に表示されます。マグニチュード、推定揺れ、距離、深さを確認できます。',
+      step6:
+        'すべての地震データはコンピューターに保存されます。アカウント不要、個人情報も不要 — 座標とランダムなデバイスIDのみが共有されます。',
+    },
   },
   errors: {
     generic: '問題が発生しました。',

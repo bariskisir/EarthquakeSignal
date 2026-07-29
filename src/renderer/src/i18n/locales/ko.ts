@@ -5,7 +5,7 @@
 import { earthquakeEn } from './earthquake'
 
 const ko = {
-  earthquake: earthquakeEn,
+  earthquake: { ...earthquakeEn, yourLocation: '너', earthquakeCenter: '지진' },
   app: {
     name: 'Earthquake Signal',
     tagline: '실시간 지진 신호.',
@@ -119,6 +119,22 @@ const ko = {
     system: '시스템',
     light: '라이트',
     dark: '다크',
+  },
+  about: {
+    howItWorks: '작동 방식',
+    howItWorksTitle: 'Earthquake Signal 작동 방식',
+    howItWorksIntro:
+      'Earthquake Signal은 Earthquake Network 모바일 앱의 데스크톱 버전입니다. 휴대폰 없이도 동일한 지진 알림을 받습니다.',
+    howItWorksSteps: {
+      step1: '지도에서 위치를 선택하세요 — 알림을 받고 싶은 곳을 설정합니다.',
+      step2: '앱이 선택한 위치를 Earthquake Network 서버에 등록합니다.',
+      step3: '두 가지 알림 채널을 구독합니다: Global(전 세계)과 내 위치 주변 10×10도 지역입니다.',
+      step4:
+        '지진 관측소가 지진을 감지하면 Earthquake Network 서버에서 Firebase를 통해 몇 초 안에 컴퓨터로 푸시 메시지가 도착합니다.',
+      step5: '지진이 지도에 표시됩니다. 규모, 예상 진도, 거리, 깊이를 확인할 수 있습니다.',
+      step6:
+        '모든 지진 데이터는 컴퓨터에 저장됩니다. 계정 불필요, 개인정보 불필요 — 좌표와 임의의 기기 ID만 공유됩니다.',
+    },
   },
   errors: {
     generic: '문제가 발생했습니다.',

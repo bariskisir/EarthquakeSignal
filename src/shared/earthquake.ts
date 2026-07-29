@@ -86,6 +86,17 @@ export const estimateEarthquakeNetworkIntensity = (
   return Math.max(0, Math.min(12, intensity))
 }
 
+/** Maps estimated local intensity values to human-readable severity labels. */
+export const getIntensityLabel = (
+  intensity: number,
+): 'mild' | 'moderate' | 'strong' | 'very-strong' | 'severe' => {
+  if (intensity < 3) return 'mild'
+  if (intensity < 5) return 'moderate'
+  if (intensity < 7) return 'strong'
+  if (intensity < 9) return 'very-strong'
+  return 'severe'
+}
+
 /** Estimates wavefront radius and countdown using the message speed and transport delay. */
 export const calculateEarthquakeWaveState = (
   distanceKm: number,

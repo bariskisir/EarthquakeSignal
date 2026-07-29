@@ -38,6 +38,7 @@ const settingsFieldsSchema = z.object({
   seismicMinimumMagnitude: z.number().min(0).max(10),
   seismicMaximumDistanceKm: z.number().int().min(1).max(20_000),
   seismicNotificationPresentation: z.enum(EARTHQUAKE_NOTIFICATION_PRESENTATIONS),
+  earthquakeFilter: z.enum(['all', '4', '5']),
 })
 
 export const settingsSchema = settingsFieldsSchema.superRefine((settings, context) => {
@@ -71,7 +72,7 @@ export const parsePersistedSettings = (input: unknown): AppSettings => {
   const previousRevision =
     typeof persisted.settingsRevision === 'number' ? persisted.settingsRevision : 1
   if (previousRevision < 3) {
-    if (persisted.seismicMinimumMagnitude === 2) candidate.seismicMinimumMagnitude = 3
+    if (persisted.seismicMinimumMagnitude === 3) candidate.seismicMinimumMagnitude = 4
     if (persisted.seismicMaximumDistanceKm === 500) candidate.seismicMaximumDistanceKm = 1_000
   }
   const parsed = settingsSchema.safeParse(candidate)

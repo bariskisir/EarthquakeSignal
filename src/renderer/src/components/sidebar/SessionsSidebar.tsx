@@ -2,24 +2,31 @@
  * Manages saved sessions in the collapsible workspace sidebar.
  */
 
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Dropdown, Empty, Input, Modal, Tooltip, type MenuProps } from 'antd'
 import { FileText, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { SessionSummary } from '@shared/types'
 import { useTheme } from '@renderer/context/ThemeProvider'
 import { useSessionActions } from '@renderer/hooks/useSessionActions'
-import { useAppSelector } from '@renderer/store'
+import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
+import { useAppDispatch, useAppSelector } from '@renderer/store'
+import { setEarthquakeFilter, type EarthquakeFilter } from '@renderer/store/appSlice'
 import { formatDate } from '@renderer/utils/formatters'
 import styles from './SessionsSidebar.module.scss'
+
+const FILTER_OPTIONS: EarthquakeFilter[] = ['all', '4', '5']
 
 /** Renders open, rename, delete, and collapse actions for server-provided sessions. */
 const SessionsSidebar = (): React.JSX.Element => {
   const sessions = useAppSelector((state) => state.app.sessions)
   const currentSession = useAppSelector((state) => state.app.currentSession)
+  const earthquakeFilter = useAppSelector((state) => state.app.earthquakeFilter)
   const timeFormat = useAppSelector((state) => state.app.settings.timeFormat)
   const sidebarOpen = useAppSelector((state) => state.app.sessionsSidebarOpen)
   const actions = useSessionActions()
+  const settingsActions = useSettingsActions()
+  const dispatch = useAppDispatch()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const light = theme === 'light'
@@ -27,6 +34,23 @@ const SessionsSidebar = (): React.JSX.Element => {
   const [renameValue, setRenameValue] = useState('')
   const [renaming, setRenaming] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  const listRef = useRef<HTMLDivElement>(null)
+
+  const filteredSessions = useMemo(() => {
+    if (earthquakeFilter === 'all') return sessions
+    const threshold = Number(earthquakeFilter)
+    return sessions.filter((s) => s.magnitude !== undefined && s.magnitude >= threshold)
+  }, [sessions, earthquakeFilter])
+
+  const currentFilteredIndex = useMemo(() => {
+    if (!currentSession) return -1
+    return filteredSessions.findIndex((s) => s.id === currentSession.id)
+  }, [filteredSessions, currentSession])
+
+  useEffect(() => {
+    setFocusedIndex(currentFilteredIndex)
+  }, [currentFilteredIndex])
 
   /** Resolves a generated title from the active interface locale while preserving custom names. */
   const displayTitle = (item: SessionSummary): string =>
@@ -78,6 +102,33 @@ const SessionsSidebar = (): React.JSX.Element => {
     },
   })
 
+  /** Opens the session at the given filtered index. */
+  const openFiltered = useCallback(
+    (index: number) => {
+      const item = filteredSessions[index]
+      if (item) void actions.openSession(item.id)
+    },
+    [filteredSessions, actions],
+  )
+
+  /** Moves keyboard focus and optionally opens the session. */
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (filteredSessions.length === 0) return
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setFocusedIndex((prev) => (prev + 1) % filteredSessions.length)
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setFocusedIndex((prev) => (prev - 1 + filteredSessions.length) % filteredSessions.length)
+      } else if (event.key === 'Enter') {
+        event.preventDefault()
+        if (focusedIndex >= 0) openFiltered(focusedIndex)
+      }
+    },
+    [filteredSessions, focusedIndex, openFiltered],
+  )
+
   return (
     <>
       <aside
@@ -87,7 +138,21 @@ const SessionsSidebar = (): React.JSX.Element => {
         {sidebarOpen && (
           <>
             <header className={styles.header}>
-              <span>{t('nav.sessions')}</span>
+              <div className={styles.filterGroup}>
+                {FILTER_OPTIONS.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`${styles.filterButton} ${earthquakeFilter === option ? styles.filterActive : ''}`}
+                    onClick={() => {
+                      dispatch(setEarthquakeFilter(option))
+                      void settingsActions.saveSettings({ earthquakeFilter: option })
+                    }}
+                  >
+                    {option === 'all' ? 'All' : `${option}+`}
+                  </button>
+                ))}
+              </div>
               <div className={styles.headerActions}>
                 <Tooltip title={t('sessions.deleteAll')}>
                   <Button
@@ -102,8 +167,15 @@ const SessionsSidebar = (): React.JSX.Element => {
               </div>
             </header>
 
-            <div className={styles.scrollArea}>
-              {sessions.length === 0 ? (
+            <div
+              className={styles.scrollArea}
+              ref={listRef}
+              role="listbox"
+              aria-label={t('nav.sessions')}
+              onKeyDown={handleKeyDown}
+              tabIndex={0}
+            >
+              {filteredSessions.length === 0 ? (
                 <div className={styles.emptyWrap}>
                   <Empty
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -112,7 +184,7 @@ const SessionsSidebar = (): React.JSX.Element => {
                 </div>
               ) : (
                 <div className={styles.list}>
-                  {sessions.map((item) => (
+                  {filteredSessions.map((item, index) => (
                     <Dropdown
                       key={item.id}
                       menu={sessionMenu(item)}
@@ -120,12 +192,16 @@ const SessionsSidebar = (): React.JSX.Element => {
                       disabled={deletingAll}
                     >
                       <div
-                        className={`${styles.item} ${currentSession?.id === item.id ? styles.active : ''}`}
+                        role="option"
+                        aria-selected={currentSession?.id === item.id}
+                        tabIndex={-1}
+                        className={`${styles.item} ${currentSession?.id === item.id ? styles.active : ''} ${index === focusedIndex ? styles.focused : ''}`}
                       >
                         <button
                           type="button"
                           className={styles.openButton}
                           onClick={() => void actions.openSession(item.id)}
+                          onFocus={() => setFocusedIndex(index)}
                         >
                           <span className={styles.fileIcon}>
                             <FileText size={14} />

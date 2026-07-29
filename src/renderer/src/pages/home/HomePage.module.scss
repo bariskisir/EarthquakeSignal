@@ -125,3 +125,16 @@
     text-overflow: ellipsis;
   }
 }
+
+.intensityLabel {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--color-primary-mute);
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}

@@ -19,6 +19,7 @@ import {
   calculateDestinationCoordinates,
   calculateDistanceKm,
   createEarthquakeTopics,
+  estimateEarthquakeNetworkIntensity,
 } from '@shared/earthquake'
 import {
   createEarthquakeNotificationUrl,
@@ -42,7 +43,7 @@ import {
   EARTHQUAKE_NETWORK_UPDATE_LOCATION_URL,
   EARTHQUAKE_NETWORK_UPDATE_TILE_URL,
 } from '../earthquakeNetworkConfig'
-import { parseEarthquakeEnvelope } from './EarthquakePayloadParser'
+import { isIgnoredMessage, parseEarthquakeEnvelope } from './EarthquakePayloadParser'
 import type LoggerService from './LoggerService'
 import type StorageService from './StorageService'
 
@@ -246,7 +247,7 @@ export default class EarthquakeService {
 
   /** Simulates a random event through the same persistence and notification pipeline. */
   public async test(kind: EarthquakeEventKind): Promise<SessionDocument> {
-    const requestedDistanceKm = 100 + Math.random() * 400
+    const requestedDistanceKm = 10 + Math.random() * 490
     const [latitude, longitude] = calculateDestinationCoordinates(
       this.settings.earthquakeLatitude,
       this.settings.earthquakeLongitude,
@@ -259,9 +260,7 @@ export default class EarthquakeService {
       latitude,
       longitude,
     )
-    const magnitude = Number(
-      (Math.max(this.settings.seismicMinimumMagnitude, 4) + Math.random()).toFixed(1),
-    )
+    const magnitude = Number((5 + Math.random() * 3).toFixed(1))
     const receivedAt = new Date().toISOString()
     const earthquake: EarthquakeEvent = {
       id: createHash('sha256').update(`test:${randomUUID()}`).digest('hex'),
@@ -278,7 +277,7 @@ export default class EarthquakeService {
       ...(kind === 'realtime'
         ? {
             revision: 1,
-            estimatedIntensity: Number((4 + Math.random()).toFixed(1)),
+            estimatedIntensity: estimateEarthquakeNetworkIntensity(magnitude, distanceKm),
             warning: 'Realtime alert test',
           }
         : { warning: 'Seismic network notification test' }),
@@ -788,6 +787,8 @@ export default class EarthquakeService {
   ): Promise<void> {
     this.logger.info('EarthquakeService', 'Raw FCM message received.', envelope)
     try {
+      const data = envelope.message.data ?? {}
+      if (isIgnoredMessage(data)) return
       const earthquake = parseEarthquakeEnvelope(
         envelope,
         this.settings.earthquakeLatitude,
@@ -861,7 +862,7 @@ export default class EarthquakeService {
       return this.settings.seismicNotificationPresentation
     }
     if (this.settings.realtimeNotificationPresentation === 'normal') return 'normal'
-    return (earthquake.estimatedIntensity ?? 0) >= 3 ? 'fullscreen' : 'normal'
+    return 'fullscreen'
   }
 
   /** Brings the existing hardened renderer forward for its fullscreen alert layer. */

@@ -53,12 +53,12 @@ describe('parsePersistedSettings', () => {
     const result = parsePersistedSettings({
       ...DEFAULT_SETTINGS,
       settingsRevision: 2,
-      seismicMinimumMagnitude: 2,
+      seismicMinimumMagnitude: 3,
       seismicMaximumDistanceKm: 500,
     })
     expect(result).toMatchObject({
       settingsRevision: 3,
-      seismicMinimumMagnitude: 3,
+      seismicMinimumMagnitude: 4,
       seismicMaximumDistanceKm: 1_000,
     })
   })

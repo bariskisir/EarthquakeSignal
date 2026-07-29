@@ -7,6 +7,12 @@ import type { EarthquakeEvent } from '@shared/types'
 
 const ignoredMessageTypes = new Set(['manual', 'chat_public', 'chat_personal', 'friendship'])
 
+/** Returns true when a raw FCM data payload carries a non-seismic message type. */
+export const isIgnoredMessage = (data: Record<string, unknown>): boolean => {
+  const rawType = readString(data, ['type', 'eventType', 'notificationType'])?.toLowerCase() ?? null
+  return rawType !== null && ignoredMessageTypes.has(rawType)
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 

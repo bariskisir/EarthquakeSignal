@@ -43,6 +43,7 @@ export interface AppSettings {
   seismicMinimumMagnitude: number
   seismicMaximumDistanceKm: number
   seismicNotificationPresentation: EarthquakeNotificationPresentation
+  earthquakeFilter: 'all' | '4' | '5'
 }
 
 export type AppSettingsPatch = {
@@ -66,12 +67,13 @@ export const DEFAULT_SETTINGS: AppSettings = {
   earthquakeLongitude: 32,
   fcmCheckIntervalMinutes: 480,
   realtimeAlertsEnabled: true,
-  realtimeSilentWhenMild: true,
+  realtimeSilentWhenMild: false,
   realtimeNotificationPresentation: 'fullscreen',
   seismicNotificationsEnabled: true,
-  seismicMinimumMagnitude: 3,
+  seismicMinimumMagnitude: 4,
   seismicMaximumDistanceKm: 1_000,
   seismicNotificationPresentation: 'normal',
+  earthquakeFilter: 'all',
 }
 
 export type EarthquakeEventKind = 'realtime' | 'seismic-network'
@@ -107,6 +109,7 @@ export interface SessionDocument {
   createdAt: string
   updatedAt: string
   earthquake?: EarthquakeEvent | undefined
+  magnitude?: number | undefined
 }
 
 export interface SessionSummary {
@@ -115,6 +118,7 @@ export interface SessionSummary {
   isDefaultTitle: boolean
   createdAt: string
   updatedAt: string
+  magnitude?: number | undefined
 }
 
 export interface BootstrapPayload {

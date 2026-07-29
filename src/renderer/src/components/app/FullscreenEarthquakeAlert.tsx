@@ -7,6 +7,7 @@ import { stopEarthquakeAlarm } from '@renderer/services/EarthquakeAlarmService'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { setFullscreenEarthquake } from '@renderer/store/appSlice'
 import EarthquakeEventMap from '@renderer/components/earthquake/EarthquakeEventMap'
+import { getIntensityLabel } from '@shared/earthquake'
 import styles from './FullscreenEarthquakeAlert.module.scss'
 
 const logger = createLogger('FullscreenEarthquakeAlert')
@@ -42,14 +43,27 @@ const FullscreenEarthquakeAlert = (): React.JSX.Element | null => {
   const location = earthquake.place ?? `${earthquake.latitude}, ${earthquake.longitude}`
   const magnitude =
     earthquake.magnitude === undefined ? 'M —' : `M ${earthquake.magnitude.toFixed(1)}`
+  const intensityLabel =
+    earthquake.estimatedIntensity !== undefined
+      ? getIntensityLabel(earthquake.estimatedIntensity)
+      : null
 
   return (
-    <div className={styles.overlay} role="alertdialog" aria-modal="true">
+    <div
+      className={`${styles.overlay} ${intensityLabel ? styles[intensityLabel] : ''}`}
+      role="alertdialog"
+      aria-modal="true"
+    >
       <section className={styles.summary}>
         <span className={styles.eyebrow}>{t('earthquake.fullscreenAlert')}</span>
         <h1>
           {magnitude} – {location}
         </h1>
+        {earthquake.estimatedIntensity !== undefined && (
+          <p className={styles.intensity}>
+            {t(`earthquake.intensityLabels.${getIntensityLabel(earthquake.estimatedIntensity)}`)}
+          </p>
+        )}
         {earthquake.distanceKm !== undefined && <p>{earthquake.distanceKm.toFixed(0)} km</p>}
       </section>
       <div className={styles.mapPanel}>

@@ -15,6 +15,7 @@ import {
 
 export type AppPage = 'home' | 'settings'
 export type SettingsSection = 'general' | 'earthquake' | 'display' | 'updates' | 'about' | 'logging'
+export type EarthquakeFilter = 'all' | '4' | '5'
 
 export interface AppState {
   initialized: boolean
@@ -29,6 +30,7 @@ export interface AppState {
   sessionsSidebarOpen: boolean
   earthquakeStatus: EarthquakeServiceStatus
   fullscreenEarthquake: SessionDocument | null
+  earthquakeFilter: EarthquakeFilter
 }
 
 const initialState: AppState = {
@@ -44,6 +46,7 @@ const initialState: AppState = {
   sessionsSidebarOpen: true,
   earthquakeStatus: { state: 'disconnected', topics: [], subscribedTopics: [] },
   fullscreenEarthquake: null,
+  earthquakeFilter: 'all',
 }
 
 const appSlice = createSlice({
@@ -60,6 +63,7 @@ const appSlice = createSlice({
       state.sessions = action.payload.sessions
       state.currentSession = action.payload.currentSession
       state.earthquakeStatus = action.payload.earthquakeStatus
+      state.earthquakeFilter = action.payload.settings.earthquakeFilter
     },
     /** Opens a top-level application page. */
     setPage(state, action: PayloadAction<AppPage>) {
@@ -72,6 +76,7 @@ const appSlice = createSlice({
     /** Replaces settings after successful persistence. */
     setSettings(state, action: PayloadAction<AppSettings>) {
       state.settings = action.payload
+      state.earthquakeFilter = action.payload.earthquakeFilter
     },
     /** Inserts a newly created summary at the front without duplicating its identifier. */
     addSessionSummary(state, action: PayloadAction<SessionSummary>) {
@@ -120,6 +125,10 @@ const appSlice = createSlice({
     setFullscreenEarthquake(state, action: PayloadAction<SessionDocument | null>) {
       state.fullscreenEarthquake = action.payload
     },
+    /** Selects the earthquake magnitude filter shown in the sidebar. */
+    setEarthquakeFilter(state, action: PayloadAction<EarthquakeFilter>) {
+      state.earthquakeFilter = action.payload
+    },
   },
 })
 
@@ -138,6 +147,7 @@ export const {
   setEarthquakeStatus,
   setFullscreenEarthquake,
   setUpdateState,
+  setEarthquakeFilter,
 } = appSlice.actions
 
 export default appSlice.reducer

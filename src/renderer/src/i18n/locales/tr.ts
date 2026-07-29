@@ -125,6 +125,24 @@ const tr = {
   errors: {
     generic: 'Bir hata oluştu.',
   },
+  about: {
+    howItWorks: 'Nasıl çalışır',
+    howItWorksTitle: 'Earthquake Signal nasıl çalışır',
+    howItWorksIntro:
+      'Earthquake Signal, Earthquake Network mobil uygulamasının masaüstü sürümüdür. Aynı deprem bildirimlerini alır — telefon gerekmez.',
+    howItWorksSteps: {
+      step1: 'Haritadan konumunuzu seçin — nerede bildirim almak istediğinizi belirleyin.',
+      step2: 'Uygulama, konumunuzu Earthquake Network sunucusuna kaydeder.',
+      step3:
+        'İki uyarı kanalına üye olur: Global (dünya çapında) ve konumunuzu merkez alan 10×10 derecelik yerel bölge.',
+      step4:
+        'Sismik istasyonlar bir deprem tespit ettiğinde, Earthquake Network sunucusundan Firebase üzerinden bilgisayarınıza saniyeler içinde bir anlık mesaj ulaşır.',
+      step5:
+        'Deprem haritanızda belirir. Büyüklük, tahmini sarsıntı, mesafe ve derinlik bilgilerini görürsünüz.',
+      step6:
+        'Tüm deprem verileri bilgisayarınızda saklanır. Hesap gerekmez, kişisel bilgi paylaşılmaz — yalnızca koordinatlarınız ve rastgele bir cihaz kimliği sunucuyla paylaşılır.',
+    },
+  },
 } as const
 
 export default tr

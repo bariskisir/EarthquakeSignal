@@ -1,5 +1,15 @@
 /* Styles the monitor-filling earthquake warning rendered inside the fullscreen main window. */
 
+@keyframes pulseBorder {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
 .overlay {
   position: fixed;
   z-index: 10000;
@@ -7,6 +17,41 @@
   overflow: hidden;
   color: #fff;
   background: #090b17;
+
+  &::before {
+    content: '';
+    position: absolute;
+    z-index: 30;
+    inset: 10px;
+    border: 6px solid transparent;
+    border-radius: 20px;
+    pointer-events: none;
+  }
+
+  &.mild::before {
+    border-color: #22c55e;
+    animation: pulseBorder 1.2s ease-in-out infinite;
+  }
+
+  &.moderate::before {
+    border-color: #eab308;
+    animation: pulseBorder 0.9s ease-in-out infinite;
+  }
+
+  &.strong::before {
+    border-color: #f97316;
+    animation: pulseBorder 0.7s ease-in-out infinite;
+  }
+
+  &.very-strong::before {
+    border-color: #ef4444;
+    animation: pulseBorder 0.5s ease-in-out infinite;
+  }
+
+  &.severe::before {
+    border-color: #b91c1c;
+    animation: pulseBorder 0.35s ease-in-out infinite;
+  }
 }
 
 .mapPanel {
@@ -52,6 +97,12 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.18em;
+}
+
+.intensity {
+  color: #c7d2fe !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
 }
 
 @media (max-width: 720px) {

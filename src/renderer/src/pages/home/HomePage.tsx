@@ -9,6 +9,7 @@ import SessionsSidebar from '@renderer/components/sidebar/SessionsSidebar'
 import EarthquakeEventMap from '@renderer/components/earthquake/EarthquakeEventMap'
 import { useAppSelector } from '@renderer/store'
 import { formatDate } from '@renderer/utils/formatters'
+import { getIntensityLabel } from '@shared/earthquake'
 import styles from './HomePage.module.scss'
 
 /** Renders the primary application workspace. */
@@ -71,7 +72,14 @@ const HomePage = (): React.JSX.Element => {
               {earthquake.estimatedIntensity !== undefined && (
                 <div>
                   <dt>{t('earthquake.intensity')}</dt>
-                  <dd>{earthquake.estimatedIntensity.toFixed(1)}</dd>
+                  <dd>
+                    {earthquake.estimatedIntensity.toFixed(1)}{' '}
+                    <span className={styles.intensityLabel}>
+                      {t(
+                        `earthquake.intensityLabels.${getIntensityLabel(earthquake.estimatedIntensity)}`,
+                      )}
+                    </span>
+                  </dd>
                 </div>
               )}
               {earthquake.distanceKm !== undefined && (

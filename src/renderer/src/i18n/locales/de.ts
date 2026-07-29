@@ -5,7 +5,7 @@
 import { earthquakeEn } from './earthquake'
 
 const de = {
-  earthquake: earthquakeEn,
+  earthquake: { ...earthquakeEn, yourLocation: 'Du', earthquakeCenter: 'Erdbeben' },
   app: {
     name: 'Earthquake Signal',
     tagline: 'Erdbebensignale in Echtzeit.',
@@ -124,6 +124,25 @@ const de = {
   },
   errors: {
     generic: 'Etwas ist schiefgelaufen.',
+  },
+  about: {
+    howItWorks: 'So funktioniert es',
+    howItWorksTitle: 'So funktioniert Earthquake Signal',
+    howItWorksIntro:
+      'Earthquake Signal ist die Desktop-Version der Earthquake Network Mobil-App. Es empfängt dieselben Erdbebenwarnungen — ganz ohne Smartphone.',
+    howItWorksSteps: {
+      step1:
+        'Wählen Sie Ihren Standort auf der Karte — legen Sie fest, wo Sie benachrichtigt werden möchten.',
+      step2: 'Die App registriert Ihren Standort beim Earthquake Network Server.',
+      step3:
+        'Sie abonniert zwei Warnkanäle: Global (weltweit) und Ihre lokale 10×10-Grad-Zone um Ihren Standort.',
+      step4:
+        'Wenn seismische Stationen ein Erdbeben erkennen, erreicht Sie innerhalb von Sekunden eine Push-Nachricht vom Earthquake Network Server über Firebase.',
+      step5:
+        'Das Erdbeben erscheint auf Ihrer Karte. Sie sehen Magnitude, geschätzte Erschütterung, Entfernung und Tiefe.',
+      step6:
+        'Alle Erdbebendaten werden auf Ihrem Computer gespeichert. Kein Konto, keine persönlichen Daten — nur Ihre Koordinaten und eine zufällige Geräte-ID werden geteilt.',
+    },
   },
 } as const
 

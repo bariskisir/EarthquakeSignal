@@ -125,6 +125,24 @@ const en = {
   errors: {
     generic: 'Something went wrong.',
   },
+  about: {
+    howItWorks: 'How it works',
+    howItWorksTitle: 'How Earthquake Signal works',
+    howItWorksIntro:
+      'Earthquake Signal is a desktop companion to the Earthquake Network mobile app. It receives the same earthquake alerts — no phone needed.',
+    howItWorksSteps: {
+      step1: 'Pick your location on the map — choose where you want to be notified about.',
+      step2: 'The app registers your location with the Earthquake Network server.',
+      step3:
+        'It joins two alert channels: Global (worldwide) and your local 10×10 degree zone around your location.',
+      step4:
+        'When seismic stations detect an earthquake, a push message travels from Earthquake Network through Firebase to your computer within seconds.',
+      step5:
+        'The earthquake appears on your map. You see magnitude, estimated shaking, distance, and depth.',
+      step6:
+        'All earthquake data is stored on your computer. No account, no personal info — only your coordinates and a random device ID are shared.',
+    },
+  },
 } as const
 
 export default en
