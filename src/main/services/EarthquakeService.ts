@@ -278,6 +278,7 @@ export default class EarthquakeService {
         ? {
             revision: 1,
             estimatedIntensity: estimateEarthquakeNetworkIntensity(magnitude, distanceKm),
+            alertDelaySeconds: Math.round(Math.random() * 10),
             warning: 'Realtime alert test',
           }
         : { warning: 'Seismic network notification test' }),
