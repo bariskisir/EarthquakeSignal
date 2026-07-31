@@ -26,6 +26,7 @@ export interface AppState {
   version: string
   sessions: SessionSummary[]
   currentSession: SessionDocument | null
+  sessionViewNonce: number
   update: UpdateStateEvent
   sessionsSidebarOpen: boolean
   earthquakeStatus: EarthquakeServiceStatus
@@ -42,6 +43,7 @@ const initialState: AppState = {
   version: '0.0.0',
   sessions: [],
   currentSession: null,
+  sessionViewNonce: 0,
   update: { state: 'idle' },
   sessionsSidebarOpen: true,
   earthquakeStatus: { state: 'disconnected', topics: [], subscribedTopics: [] },
@@ -99,9 +101,10 @@ const appSlice = createSlice({
     setSessions(state, action: PayloadAction<SessionSummary[]>) {
       state.sessions = action.payload
     },
-    /** Sets the session displayed in the main workspace. */
+    /** Sets the session displayed in the main workspace and forces its view to remount. */
     setCurrentSession(state, action: PayloadAction<SessionDocument | null>) {
       state.currentSession = action.payload
+      state.sessionViewNonce += 1
     },
     /** Refreshes a document only when it is still the active session. */
     replaceCurrentSession(state, action: PayloadAction<SessionDocument>) {

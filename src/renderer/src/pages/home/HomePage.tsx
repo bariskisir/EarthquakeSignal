@@ -15,6 +15,7 @@ import styles from './HomePage.module.scss'
 /** Renders the primary application workspace. */
 const HomePage = (): React.JSX.Element => {
   const session = useAppSelector((state) => state.app.currentSession)
+  const sessionViewNonce = useAppSelector((state) => state.app.sessionViewNonce)
   const timeFormat = useAppSelector((state) => state.app.settings.timeFormat)
   const userLatitude = useAppSelector((state) => state.app.settings.earthquakeLatitude)
   const userLongitude = useAppSelector((state) => state.app.settings.earthquakeLongitude)
@@ -62,7 +63,7 @@ const HomePage = (): React.JSX.Element => {
             </header>
             <div className={styles.eventMap}>
               <EarthquakeEventMap
-                key={earthquake.id}
+                key={`${earthquake.id}:${sessionViewNonce}`}
                 earthquake={earthquake}
                 userLatitude={userLatitude}
                 userLongitude={userLongitude}

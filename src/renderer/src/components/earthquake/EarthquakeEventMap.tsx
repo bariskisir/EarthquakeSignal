@@ -136,16 +136,33 @@ const EarthquakeEventMap = ({
       })
       .addTo(map)
 
-    const fullscreenWide = mode === 'fullscreen' && element.clientWidth > 800
-    map.fitBounds([eventLocation, userLocation] as L.LatLngBoundsExpression, {
-      paddingTopLeft: fullscreenWide ? [430, 75] : [55, 55],
-      paddingBottomRight: mode === 'fullscreen' ? [90, 90] : [55, 55],
-      maxZoom: 11,
-    })
+    const bounds: L.LatLngBoundsExpression = [eventLocation, userLocation]
+    /** Frames both markers within the container's current size. */
+    const fitMapToBounds = (): void => {
+      const fullscreenWide = mode === 'fullscreen' && element.clientWidth > 800
+      map.fitBounds(bounds, {
+        paddingTopLeft: fullscreenWide ? [430, 75] : [55, 55],
+        paddingBottomRight: mode === 'fullscreen' ? [90, 90] : [55, 55],
+        maxZoom: 11,
+      })
+    }
+    fitMapToBounds()
     mapRef.current = map
     const resizeTimer = window.setTimeout(() => map.invalidateSize(), 0)
+    let refitTimer = 0
+    /** Re-frames the markers after the container size settles. */
+    const resizeObserver = new ResizeObserver(() => {
+      window.clearTimeout(refitTimer)
+      refitTimer = window.setTimeout(() => {
+        map.invalidateSize()
+        fitMapToBounds()
+      }, 150)
+    })
+    resizeObserver.observe(element)
     return () => {
       window.clearTimeout(resizeTimer)
+      window.clearTimeout(refitTimer)
+      resizeObserver.disconnect()
       map.remove()
       mapRef.current = null
       waveCircleRef.current = null

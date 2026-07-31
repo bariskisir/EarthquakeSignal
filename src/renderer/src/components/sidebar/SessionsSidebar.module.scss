@@ -100,8 +100,7 @@
   border-radius: var(--list-item-radius);
 
   &:hover,
-  &.active,
-  &.focused {
+  &.active {
     border-color: var(--color-border);
     background: var(--color-background-soft);
   }
@@ -111,8 +110,7 @@
   }
 
   &:hover .deleteButton,
-  &.active .deleteButton,
-  &.focused .deleteButton {
+  &.active .deleteButton {
     visibility: visible;
   }
 }
@@ -129,6 +127,10 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
+
+  &:focus {
+    outline: none;
+  }
 
   &:disabled {
     cursor: default;

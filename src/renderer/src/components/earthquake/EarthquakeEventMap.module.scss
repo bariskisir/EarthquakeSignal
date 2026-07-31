@@ -3,7 +3,7 @@
 .shell {
   position: relative;
   width: 100%;
-  height: 380px;
+  height: 100%;
   overflow: hidden;
   border: 0.5px solid var(--color-border);
   border-radius: 12px;
@@ -32,6 +32,10 @@
   strong {
     font-size: 26px;
   }
+}
+
+:global(.leaflet-container).map {
+  background: var(--color-background-soft);
 }
 
 .map {
@@ -147,10 +151,6 @@
 }
 
 @media (max-width: 700px) {
-  .shell {
-    height: 320px;
-  }
-
   .legend span {
     display: none;
   }

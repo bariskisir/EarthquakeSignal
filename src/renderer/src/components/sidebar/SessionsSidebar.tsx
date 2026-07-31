@@ -2,7 +2,7 @@
  * Manages saved sessions in the collapsible workspace sidebar.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Dropdown, Empty, Input, Modal, Tooltip, type MenuProps } from 'antd'
 import { FileText, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -17,6 +17,13 @@ import styles from './SessionsSidebar.module.scss'
 
 const FILTER_OPTIONS: EarthquakeFilter[] = ['all', '4', '5']
 
+/** Returns the sessions visible under the given magnitude filter. */
+const filterSessions = (items: SessionSummary[], filter: EarthquakeFilter): SessionSummary[] => {
+  if (filter === 'all') return items
+  const threshold = Number(filter)
+  return items.filter((item) => item.magnitude !== undefined && item.magnitude >= threshold)
+}
+
 /** Renders open, rename, delete, and collapse actions for server-provided sessions. */
 const SessionsSidebar = (): React.JSX.Element => {
   const sessions = useAppSelector((state) => state.app.sessions)
@@ -24,7 +31,9 @@ const SessionsSidebar = (): React.JSX.Element => {
   const earthquakeFilter = useAppSelector((state) => state.app.earthquakeFilter)
   const timeFormat = useAppSelector((state) => state.app.settings.timeFormat)
   const sidebarOpen = useAppSelector((state) => state.app.sessionsSidebarOpen)
+  const fullscreenActive = useAppSelector((state) => state.app.fullscreenEarthquake !== null)
   const actions = useSessionActions()
+  const { clearSession, openSession } = actions
   const settingsActions = useSettingsActions()
   const dispatch = useAppDispatch()
   const { t } = useTranslation()
@@ -34,23 +43,58 @@ const SessionsSidebar = (): React.JSX.Element => {
   const [renameValue, setRenameValue] = useState('')
   const [renaming, setRenaming] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
-  const [focusedIndex, setFocusedIndex] = useState(-1)
   const listRef = useRef<HTMLDivElement>(null)
 
-  const filteredSessions = useMemo(() => {
-    if (earthquakeFilter === 'all') return sessions
-    const threshold = Number(earthquakeFilter)
-    return sessions.filter((s) => s.magnitude !== undefined && s.magnitude >= threshold)
-  }, [sessions, earthquakeFilter])
+  const filteredSessions = useMemo(
+    () => filterSessions(sessions, earthquakeFilter),
+    [sessions, earthquakeFilter],
+  )
 
-  const currentFilteredIndex = useMemo(() => {
-    if (!currentSession) return -1
-    return filteredSessions.findIndex((s) => s.id === currentSession.id)
-  }, [filteredSessions, currentSession])
+  /** Applies a magnitude filter and shows its first earthquake, or none when it is empty. */
+  const applyFilter = (option: EarthquakeFilter): void => {
+    if (option === earthquakeFilter) return
+    dispatch(setEarthquakeFilter(option))
+    void settingsActions.saveSettings({ earthquakeFilter: option })
+    const first = filterSessions(sessions, option)[0]
+    if (!first) {
+      clearSession()
+    } else if (first.id !== currentSession?.id) {
+      void openSession(first.id)
+    }
+  }
 
   useEffect(() => {
-    setFocusedIndex(currentFilteredIndex)
-  }, [currentFilteredIndex])
+    if (fullscreenActive) return
+    /** Moves the selection to the previous or next earthquake in the active filter. */
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+      if (filteredSessions.length === 0) return
+      const target = event.target
+      if (
+        target instanceof HTMLElement &&
+        target.closest('input, textarea, [contenteditable="true"], .ant-modal, .ant-dropdown')
+      ) {
+        return
+      }
+      event.preventDefault()
+      const currentIndex = currentSession
+        ? filteredSessions.findIndex((item) => item.id === currentSession.id)
+        : -1
+      const nextIndex =
+        event.key === 'ArrowDown'
+          ? (currentIndex + 1) % filteredSessions.length
+          : (currentIndex - 1 + filteredSessions.length) % filteredSessions.length
+      const item = filteredSessions[nextIndex]
+      if (item) void openSession(item.id)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [filteredSessions, currentSession, fullscreenActive, openSession])
+
+  useEffect(() => {
+    if (!currentSession) return
+    listRef.current?.querySelector(`.${styles.active}`)?.scrollIntoView({ block: 'nearest' })
+  }, [currentSession])
 
   /** Resolves a generated title from the active interface locale while preserving custom names. */
   const displayTitle = (item: SessionSummary): string =>
@@ -102,33 +146,6 @@ const SessionsSidebar = (): React.JSX.Element => {
     },
   })
 
-  /** Opens the session at the given filtered index. */
-  const openFiltered = useCallback(
-    (index: number) => {
-      const item = filteredSessions[index]
-      if (item) void actions.openSession(item.id)
-    },
-    [filteredSessions, actions],
-  )
-
-  /** Moves keyboard focus and optionally opens the session. */
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (filteredSessions.length === 0) return
-      if (event.key === 'ArrowDown') {
-        event.preventDefault()
-        setFocusedIndex((prev) => (prev + 1) % filteredSessions.length)
-      } else if (event.key === 'ArrowUp') {
-        event.preventDefault()
-        setFocusedIndex((prev) => (prev - 1 + filteredSessions.length) % filteredSessions.length)
-      } else if (event.key === 'Enter') {
-        event.preventDefault()
-        if (focusedIndex >= 0) openFiltered(focusedIndex)
-      }
-    },
-    [filteredSessions, focusedIndex, openFiltered],
-  )
-
   return (
     <>
       <aside
@@ -144,10 +161,7 @@ const SessionsSidebar = (): React.JSX.Element => {
                     key={option}
                     type="button"
                     className={`${styles.filterButton} ${earthquakeFilter === option ? styles.filterActive : ''}`}
-                    onClick={() => {
-                      dispatch(setEarthquakeFilter(option))
-                      void settingsActions.saveSettings({ earthquakeFilter: option })
-                    }}
+                    onClick={() => applyFilter(option)}
                   >
                     {option === 'all' ? t('sessions.all') : `${option}+`}
                   </button>
@@ -172,8 +186,6 @@ const SessionsSidebar = (): React.JSX.Element => {
               ref={listRef}
               role="listbox"
               aria-label={t('nav.sessions')}
-              onKeyDown={handleKeyDown}
-              tabIndex={0}
             >
               {filteredSessions.length === 0 ? (
                 <div className={styles.emptyWrap}>
@@ -184,7 +196,7 @@ const SessionsSidebar = (): React.JSX.Element => {
                 </div>
               ) : (
                 <div className={styles.list}>
-                  {filteredSessions.map((item, index) => (
+                  {filteredSessions.map((item) => (
                     <Dropdown
                       key={item.id}
                       menu={sessionMenu(item)}
@@ -195,13 +207,12 @@ const SessionsSidebar = (): React.JSX.Element => {
                         role="option"
                         aria-selected={currentSession?.id === item.id}
                         tabIndex={-1}
-                        className={`${styles.item} ${currentSession?.id === item.id ? styles.active : ''} ${index === focusedIndex ? styles.focused : ''}`}
+                        className={`${styles.item} ${currentSession?.id === item.id ? styles.active : ''}`}
                       >
                         <button
                           type="button"
                           className={styles.openButton}
-                          onClick={() => void actions.openSession(item.id)}
-                          onFocus={() => setFocusedIndex(index)}
+                          onClick={() => void openSession(item.id)}
                         >
                           <span className={styles.fileIcon}>
                             <FileText size={14} />

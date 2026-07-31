@@ -43,6 +43,12 @@ export const useSessionActions = () => {
     [dispatch, message, t],
   )
 
+  /** Clears the active workspace selection and invalidates pending loads. */
+  const clearSession = useCallback((): void => {
+    selectionRevision += 1
+    dispatch(setCurrentSession(null))
+  }, [dispatch])
+
   /** Renames a session and synchronizes the active document and summary. */
   const renameSession = useCallback(
     async (id: string, title: string): Promise<boolean> => {
@@ -96,5 +102,5 @@ export const useSessionActions = () => {
     }
   }, [dispatch, message, t])
 
-  return { deleteAllSessions, deleteSession, openSession, renameSession }
+  return { clearSession, deleteAllSessions, deleteSession, openSession, renameSession }
 }
