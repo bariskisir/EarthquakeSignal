@@ -10,6 +10,7 @@ import type {
   AppSettingsPatch,
   DeleteSessionResult,
   EarthquakeEvent,
+  EarthquakeFilter,
   SessionDocument,
   SessionSummary,
 } from '@shared/types'
@@ -239,18 +240,28 @@ export default class StorageService {
     return { deleted: true }
   }
 
-  /** Deletes every session document while holding the workspace-wide lock. */
-  public async deleteAllSessions(): Promise<void> {
-    await this.withFileLock(this.sessionsPath, async () => {
+  /** Deletes every session visible under one magnitude filter and returns their identifiers. */
+  public async deleteAllSessions(filter: EarthquakeFilter = 'all'): Promise<string[]> {
+    return this.withFileLock(this.sessionsPath, async () => {
       const entries = await readdir(this.sessionsPath, { withFileTypes: true })
-      await Promise.all(
+      const candidates = await Promise.all(
         entries
           .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
-          .map((entry) => {
+          .map(async (entry) => {
             const filePath = join(this.sessionsPath, entry.name)
-            return this.withFileLock(filePath, () => unlink(filePath))
+            return { document: await this.tryReadSession(filePath), filePath }
           }),
       )
+      const threshold = filter === 'all' ? null : Number(filter)
+      const targets = candidates.filter(({ document }) => {
+        if (threshold === null) return true
+        const magnitude = document?.earthquake?.magnitude
+        return magnitude !== undefined && magnitude >= threshold
+      })
+      await Promise.all(
+        targets.map(({ filePath }) => this.withFileLock(filePath, () => unlink(filePath))),
+      )
+      return targets.flatMap(({ document }) => (document ? [document.id] : []))
     })
   }
 

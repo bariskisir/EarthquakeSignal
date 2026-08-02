@@ -19,6 +19,8 @@ export type LogLevel = (typeof LOG_LEVELS)[number]
 export type EarthquakeNotificationPresentation =
   (typeof EARTHQUAKE_NOTIFICATION_PRESENTATIONS)[number]
 export type DesktopPlatform = 'win32' | 'darwin' | 'linux'
+/** Selects all earthquakes or those at-or-above one supported magnitude threshold. */
+export type EarthquakeFilter = 'all' | '4' | '5'
 
 export interface AppSettings {
   settingsRevision: 3
@@ -44,7 +46,7 @@ export interface AppSettings {
   seismicMinimumMagnitude: number
   seismicMaximumDistanceKm: number
   seismicNotificationPresentation: EarthquakeNotificationPresentation
-  earthquakeFilter: 'all' | '4' | '5'
+  earthquakeFilter: EarthquakeFilter
 }
 
 export type AppSettingsPatch = {
@@ -202,8 +204,8 @@ export interface EarthquakeSignalApi {
   renameSession(id: string, title: string): Promise<SessionDocument>
   /** Deletes one session. */
   deleteSession(id: string): Promise<DeleteSessionResult>
-  /** Deletes every locally persisted session. */
-  deleteAllSessions(): Promise<void>
+  /** Deletes sessions visible under the selected earthquake magnitude filter. */
+  deleteAllSessions(filter: EarthquakeFilter): Promise<string[]>
   /** Changes the native always-on-top state. */
   setAlwaysOnTop(enabled: boolean): Promise<void>
   /** Minimizes the main application window. */

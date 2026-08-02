@@ -6,12 +6,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Dropdown, Empty, Input, Modal, Tooltip, type MenuProps } from 'antd'
 import { FileText, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { SessionSummary } from '@shared/types'
+import type { EarthquakeFilter, SessionSummary } from '@shared/types'
 import { useTheme } from '@renderer/context/ThemeProvider'
 import { useSessionActions } from '@renderer/hooks/useSessionActions'
 import { useSettingsActions } from '@renderer/hooks/useSettingsActions'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
-import { setEarthquakeFilter, type EarthquakeFilter } from '@renderer/store/appSlice'
+import { setEarthquakeFilter } from '@renderer/store/appSlice'
 import { formatDate } from '@renderer/utils/formatters'
 import styles from './SessionsSidebar.module.scss'
 
@@ -115,12 +115,12 @@ const SessionsSidebar = (): React.JSX.Element => {
     if (renamed) setRenameTarget(null)
   }
 
-  /** Deletes all local session records in one operation. */
+  /** Deletes the local session records visible under the active magnitude filter. */
   const deleteAllSessions = async (): Promise<void> => {
     if (deletingAll) return
     setDeletingAll(true)
     try {
-      await actions.deleteAllSessions()
+      await actions.deleteAllSessions(earthquakeFilter)
     } finally {
       setDeletingAll(false)
     }
@@ -174,7 +174,7 @@ const SessionsSidebar = (): React.JSX.Element => {
                     danger
                     size="small"
                     icon={<Trash2 size={15} />}
-                    disabled={deletingAll || sessions.length === 0}
+                    disabled={deletingAll || filteredSessions.length === 0}
                     onClick={() => void deleteAllSessions()}
                   />
                 </Tooltip>

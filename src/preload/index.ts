@@ -30,8 +30,8 @@ const api: EarthquakeSignalApi = {
   renameSession: (id, title) => ipcRenderer.invoke(IpcChannel.SessionRename, { id, title }),
   /** Deletes one local session. */
   deleteSession: (id) => ipcRenderer.invoke(IpcChannel.SessionDelete, id),
-  /** Deletes every local session. */
-  deleteAllSessions: () => ipcRenderer.invoke(IpcChannel.SessionDeleteAll),
+  /** Deletes local sessions visible under one earthquake magnitude filter. */
+  deleteAllSessions: (filter) => ipcRenderer.invoke(IpcChannel.SessionDeleteAll, filter),
   /** Changes the native always-on-top window state. */
   setAlwaysOnTop: (enabled) => ipcRenderer.invoke(IpcChannel.WindowAlwaysOnTop, enabled),
   /** Minimizes the main application window. */

@@ -7,6 +7,7 @@ import {
   DEFAULT_SETTINGS,
   type AppSettings,
   type BootstrapPayload,
+  type EarthquakeFilter,
   type EarthquakeServiceStatus,
   type SessionDocument,
   type SessionSummary,
@@ -15,8 +16,6 @@ import {
 
 export type AppPage = 'home' | 'settings'
 export type SettingsSection = 'general' | 'earthquake' | 'display' | 'updates' | 'about' | 'logging'
-export type EarthquakeFilter = 'all' | '4' | '5'
-
 export interface AppState {
   initialized: boolean
   page: AppPage

@@ -5,6 +5,7 @@
 import { useCallback } from 'react'
 import { App as AntdApp } from 'antd'
 import { useTranslation } from 'react-i18next'
+import type { EarthquakeFilter } from '@shared/types'
 import { createLogger } from '@renderer/services/LoggerService'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import {
@@ -12,7 +13,6 @@ import {
   replaceCurrentSession,
   replaceSessionSummary,
   setCurrentSession,
-  setSessions,
 } from '@renderer/store/appSlice'
 import { toSessionSummary } from '@renderer/utils/formatters'
 
@@ -87,20 +87,31 @@ export const useSessionActions = () => {
     [currentSessionId, dispatch, sessions, message, t],
   )
 
-  /** Deletes all locally stored sessions and clears the active selection. */
-  const deleteAllSessions = useCallback(async (): Promise<boolean> => {
-    const revision = ++selectionRevision
-    try {
-      await window.app.deleteAllSessions()
-      dispatch(setSessions([]))
-      if (revision === selectionRevision) dispatch(setCurrentSession(null))
-      return true
-    } catch (error) {
-      logger.error('Sessions could not be deleted.', error)
-      void message.error(t('errors.generic'))
-      return false
-    }
-  }, [dispatch, message, t])
+  /** Deletes sessions in one magnitude filter and clears the selection when it was removed. */
+  const deleteAllSessions = useCallback(
+    async (filter: EarthquakeFilter): Promise<boolean> => {
+      const revision = ++selectionRevision
+      try {
+        const deletedIds = await window.app.deleteAllSessions(filter)
+        deletedIds.forEach((id) => {
+          dispatch(removeSessionSummary(id))
+        })
+        if (
+          currentSessionId !== null &&
+          deletedIds.includes(currentSessionId) &&
+          revision === selectionRevision
+        ) {
+          dispatch(setCurrentSession(null))
+        }
+        return true
+      } catch (error) {
+        logger.error('Sessions could not be deleted.', error)
+        void message.error(t('errors.generic'))
+        return false
+      }
+    },
+    [currentSessionId, dispatch, message, t],
+  )
 
   return { clearSession, deleteAllSessions, deleteSession, openSession, renameSession }
 }

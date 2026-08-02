@@ -33,6 +33,7 @@ const rendererLogSchema = z.object({
   details: z.string().max(8_000).optional(),
 })
 const earthquakeTestKindSchema = z.enum(['realtime', 'seismic-network'])
+const earthquakeFilterSchema = z.enum(['all', '4', '5'])
 
 const TRUSTED_EXTERNAL_ORIGINS = new Set(['https://github.com', APP_AUTHOR_URL])
 
@@ -135,9 +136,9 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     assertSender(event.sender)
     return services.storage.deleteSession(sessionIdSchema.parse(input))
   })
-  ipcMain.handle(IpcChannel.SessionDeleteAll, async (event) => {
+  ipcMain.handle(IpcChannel.SessionDeleteAll, async (event, input: unknown) => {
     assertSender(event.sender)
-    await services.storage.deleteAllSessions()
+    return services.storage.deleteAllSessions(earthquakeFilterSchema.parse(input))
   })
   ipcMain.handle(IpcChannel.WindowAlwaysOnTop, (event, enabled: unknown) => {
     assertSender(event.sender)

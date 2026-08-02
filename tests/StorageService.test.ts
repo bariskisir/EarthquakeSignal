@@ -47,12 +47,48 @@ describe('StorageService', () => {
   })
 
   it('deletes all sessions in one operation', async () => {
-    await storage.createSession('First')
-    await storage.createSession('Second')
+    const first = await storage.createSession('First')
+    const second = await storage.createSession('Second')
 
-    await storage.deleteAllSessions()
+    await expect(storage.deleteAllSessions()).resolves.toEqual(
+      expect.arrayContaining([first.id, second.id]),
+    )
 
     expect(await storage.listSessions()).toHaveLength(0)
+  })
+
+  it('deletes only earthquakes matching the selected magnitude filter', async () => {
+    const createEarthquake = (id: string, magnitude: number, minute: number): EarthquakeEvent => ({
+      id,
+      kind: 'seismic-network',
+      source: 'test',
+      latitude: 39.9,
+      longitude: 32.8,
+      receivedAt: `2026-01-01T00:${String(minute).padStart(2, '0')}:00.000Z`,
+      magnitude,
+    })
+    const belowFour = await storage.upsertEarthquakeSession(
+      createEarthquake('below-four', 3.9, 1),
+      'Below four',
+    )
+    const fourPlus = await storage.upsertEarthquakeSession(
+      createEarthquake('four-plus', 4.2, 2),
+      'Four plus',
+    )
+    const fivePlus = await storage.upsertEarthquakeSession(
+      createEarthquake('five-plus', 5.1, 3),
+      'Five plus',
+    )
+
+    await expect(storage.deleteAllSessions('5')).resolves.toEqual([fivePlus.id])
+    expect((await storage.listSessions()).map((session) => session.id)).toEqual([
+      fourPlus.id,
+      belowFour.id,
+    ])
+
+    await expect(storage.deleteAllSessions('4')).resolves.toEqual([fourPlus.id])
+    expect((await storage.listSessions()).map((session) => session.id)).toEqual([belowFour.id])
+    await expect(storage.deleteAllSessions('5')).resolves.toEqual([])
   })
 
   it('drops obsolete fields while loading older session documents', async () => {
