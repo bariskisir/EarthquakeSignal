@@ -123,6 +123,10 @@ export interface SessionSummary {
   createdAt: string
   updatedAt: string
   magnitude?: number | undefined
+  latitude?: number | undefined
+  longitude?: number | undefined
+  place?: string | undefined
+  occurredAt?: string | undefined
 }
 
 export interface BootstrapPayload {

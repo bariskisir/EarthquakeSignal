@@ -19,6 +19,7 @@ import {
   setUpdateState,
 } from '@renderer/store/appSlice'
 import { useAppDispatch } from '@renderer/store'
+import { toSessionSummary } from '@renderer/utils/formatters'
 
 const logger = createLogger('AppInit')
 
@@ -39,7 +40,7 @@ export const useAppInit = (): void => {
       window.app.onSettingsOpenRequested(() => dispatch(setPage('settings'))),
       window.app.onEarthquakeStatus((status) => dispatch(setEarthquakeStatus(status))),
       window.app.onEarthquakeReceived((event) => {
-        dispatch(replaceSessionSummary(event.session))
+        dispatch(replaceSessionSummary(toSessionSummary(event.session)))
         dispatch(replaceCurrentSession(event.session))
         if (event.presentation === 'fullscreen') {
           dispatch(setFullscreenEarthquake(event.session))

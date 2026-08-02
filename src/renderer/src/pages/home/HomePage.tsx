@@ -2,11 +2,15 @@
  * Composes the session sidebar and reusable application workspace.
  */
 
+import { useMemo } from 'react'
 import { Empty, Tag } from 'antd'
 import { Activity, Radio } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { filterSessionsByMagnitude } from '@shared/earthquakeFilters'
 import SessionsSidebar from '@renderer/components/sidebar/SessionsSidebar'
 import EarthquakeEventMap from '@renderer/components/earthquake/EarthquakeEventMap'
+import EarthquakeOverviewMap from '@renderer/components/earthquake/EarthquakeOverviewMap'
+import { useSessionActions } from '@renderer/hooks/useSessionActions'
 import { useAppSelector } from '@renderer/store'
 import { formatDate } from '@renderer/utils/formatters'
 import { getIntensityLabel } from '@shared/earthquake'
@@ -15,18 +19,25 @@ import styles from './HomePage.module.scss'
 /** Renders the primary application workspace. */
 const HomePage = (): React.JSX.Element => {
   const session = useAppSelector((state) => state.app.currentSession)
+  const sessions = useAppSelector((state) => state.app.sessions)
+  const earthquakeFilter = useAppSelector((state) => state.app.earthquakeFilter)
   const sessionViewNonce = useAppSelector((state) => state.app.sessionViewNonce)
   const timeFormat = useAppSelector((state) => state.app.settings.timeFormat)
   const userLatitude = useAppSelector((state) => state.app.settings.earthquakeLatitude)
   const userLongitude = useAppSelector((state) => state.app.settings.earthquakeLongitude)
   const { t } = useTranslation()
+  const { openSession } = useSessionActions()
   const earthquake = session?.earthquake
+  const filteredSessions = useMemo(
+    () => filterSessionsByMagnitude(sessions, earthquakeFilter),
+    [earthquakeFilter, sessions],
+  )
 
   return (
     <main className={styles.container}>
       <SessionsSidebar />
       <section className={styles.workspace}>
-        {!earthquake ? (
+        {!earthquake && filteredSessions.length === 0 ? (
           <div className={styles.emptyState}>
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -35,6 +46,16 @@ const HomePage = (): React.JSX.Element => {
                   <strong>{t('earthquake.waitingTitle')}</strong>
                 </span>
               }
+            />
+          </div>
+        ) : !earthquake ? (
+          <div className={styles.overviewMap}>
+            <EarthquakeOverviewMap
+              sessions={filteredSessions}
+              userLatitude={userLatitude}
+              userLongitude={userLongitude}
+              timeFormat={timeFormat}
+              onSelectSession={openSession}
             />
           </div>
         ) : (

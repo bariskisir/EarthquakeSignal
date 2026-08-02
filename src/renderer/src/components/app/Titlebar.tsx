@@ -32,14 +32,13 @@ const Titlebar = ({ onSettingsChange }: TitlebarProps): React.JSX.Element => {
       className={`${styles.container} ${platform === 'darwin' ? styles.nativeWindowControls : ''} drag-region`}
     >
       <div className={`${styles.topActions} no-drag`}>
-        <Tooltip placement="bottom" title={t('app.name')}>
-          <Button
-            className={styles.titleButton ?? ''}
-            type="text"
-            icon={<img className={styles.titleLogo} src={logoUrl} alt="" />}
-            onClick={() => dispatch(setPage('home'))}
-          />
-        </Tooltip>
+        <Button
+          className={styles.titleButton ?? ''}
+          type="text"
+          aria-label={t('app.name')}
+          icon={<img className={styles.titleLogo} src={logoUrl} alt="" />}
+          onClick={() => dispatch(setPage('home'))}
+        />
         {page === 'home' && (
           <Tooltip
             placement="bottom"

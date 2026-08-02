@@ -28,4 +28,33 @@ describe('toSessionSummary', () => {
     }
     expect(toSessionSummary(session)).toEqual(session)
   })
+
+  it('includes earthquake coordinates needed by the overview map', () => {
+    const session = {
+      id: '00000000-0000-4000-8000-000000000001',
+      title: 'Earthquake',
+      isDefaultTitle: false,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      earthquake: {
+        id: 'event-1',
+        kind: 'seismic-network' as const,
+        source: 'test',
+        latitude: 39.9,
+        longitude: 32.8,
+        receivedAt: '2026-01-01T00:00:00.000Z',
+        magnitude: 4.7,
+        place: 'Ankara',
+        occurredAt: '2025-12-31T23:59:00.000Z',
+      },
+    }
+
+    expect(toSessionSummary(session)).toMatchObject({
+      magnitude: 4.7,
+      latitude: 39.9,
+      longitude: 32.8,
+      place: 'Ankara',
+      occurredAt: '2025-12-31T23:59:00.000Z',
+    })
+  })
 })

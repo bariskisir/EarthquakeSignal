@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Dropdown, Empty, Input, Modal, Tooltip, type MenuProps } from 'antd'
 import { FileText, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { filterSessionsByMagnitude } from '@shared/earthquakeFilters'
 import type { EarthquakeFilter, SessionSummary } from '@shared/types'
 import { useTheme } from '@renderer/context/ThemeProvider'
 import { useSessionActions } from '@renderer/hooks/useSessionActions'
@@ -16,13 +17,6 @@ import { formatDate } from '@renderer/utils/formatters'
 import styles from './SessionsSidebar.module.scss'
 
 const FILTER_OPTIONS: EarthquakeFilter[] = ['all', '4', '5']
-
-/** Returns the sessions visible under the given magnitude filter. */
-const filterSessions = (items: SessionSummary[], filter: EarthquakeFilter): SessionSummary[] => {
-  if (filter === 'all') return items
-  const threshold = Number(filter)
-  return items.filter((item) => item.magnitude !== undefined && item.magnitude >= threshold)
-}
 
 /** Renders open, rename, delete, and collapse actions for server-provided sessions. */
 const SessionsSidebar = (): React.JSX.Element => {
@@ -46,21 +40,16 @@ const SessionsSidebar = (): React.JSX.Element => {
   const listRef = useRef<HTMLDivElement>(null)
 
   const filteredSessions = useMemo(
-    () => filterSessions(sessions, earthquakeFilter),
+    () => filterSessionsByMagnitude(sessions, earthquakeFilter),
     [sessions, earthquakeFilter],
   )
 
-  /** Applies a magnitude filter and shows its first earthquake, or none when it is empty. */
+  /** Applies a magnitude filter and opens its unselected multi-earthquake map. */
   const applyFilter = (option: EarthquakeFilter): void => {
+    clearSession()
     if (option === earthquakeFilter) return
     dispatch(setEarthquakeFilter(option))
     void settingsActions.saveSettings({ earthquakeFilter: option })
-    const first = filterSessions(sessions, option)[0]
-    if (!first) {
-      clearSession()
-    } else if (first.id !== currentSession?.id) {
-      void openSession(first.id)
-    }
   }
 
   useEffect(() => {
@@ -168,16 +157,15 @@ const SessionsSidebar = (): React.JSX.Element => {
                 ))}
               </div>
               <div className={styles.headerActions}>
-                <Tooltip title={t('sessions.deleteAll')}>
-                  <Button
-                    type="text"
-                    danger
-                    size="small"
-                    icon={<Trash2 size={15} />}
-                    disabled={deletingAll || filteredSessions.length === 0}
-                    onClick={() => void deleteAllSessions()}
-                  />
-                </Tooltip>
+                <Button
+                  type="text"
+                  danger
+                  size="small"
+                  aria-label={t('sessions.deleteAll')}
+                  icon={<Trash2 size={15} />}
+                  disabled={deletingAll || filteredSessions.length === 0}
+                  onClick={() => void deleteAllSessions()}
+                />
               </div>
             </header>
 

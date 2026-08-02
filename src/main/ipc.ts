@@ -90,12 +90,11 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
     window.webContents.setZoomFactor(settings.pageZoom)
 
     const sessions = await services.storage.listSessions()
-    const firstSession = sessions[0]
 
     return {
       settings,
       sessions,
-      currentSession: firstSession ? await services.storage.getSession(firstSession.id) : null,
+      currentSession: null,
       platform: process.platform,
       version: app.getVersion(),
       earthquakeStatus: services.earthquake.getStatus(),

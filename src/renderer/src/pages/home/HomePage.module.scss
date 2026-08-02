@@ -42,6 +42,12 @@
   }
 }
 
+.overviewMap {
+  width: 100%;
+  min-height: 300px;
+  flex: 1;
+}
+
 .eventCard {
   width: 100%;
   flex: 1 0 auto;

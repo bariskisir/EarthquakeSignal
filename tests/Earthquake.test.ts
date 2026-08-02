@@ -9,6 +9,7 @@ import {
   createEarthquakeTileTopic,
   createEarthquakeTopics,
   estimateEarthquakeNetworkIntensity,
+  getEarthquakeMarkerRadius,
 } from '../src/shared/earthquake'
 
 describe('earthquake utilities', () => {
@@ -62,5 +63,15 @@ describe('earthquake utilities', () => {
   it('matches the APK local-intensity attenuation formula', () => {
     expect(estimateEarthquakeNetworkIntensity(5, 100)).toBeCloseTo(3.16, 2)
     expect(estimateEarthquakeNetworkIntensity(4, 100)).toBeCloseTo(2.13, 2)
+  })
+
+  it('scales overview-map markers across the five magnitude bands', () => {
+    expect(getEarthquakeMarkerRadius(undefined)).toBe(5)
+    expect(getEarthquakeMarkerRadius(3.9)).toBe(5)
+    expect(getEarthquakeMarkerRadius(4)).toBe(8)
+    expect(getEarthquakeMarkerRadius(5)).toBe(12)
+    expect(getEarthquakeMarkerRadius(6)).toBe(17)
+    expect(getEarthquakeMarkerRadius(7)).toBe(23)
+    expect(getEarthquakeMarkerRadius(9.2)).toBe(23)
   })
 })

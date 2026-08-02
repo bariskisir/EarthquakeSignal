@@ -206,7 +206,17 @@ export default class StorageService {
         isDefaultTitle: doc.isDefaultTitle,
         createdAt: doc.createdAt,
         updatedAt: doc.updatedAt,
-        magnitude: doc.earthquake?.magnitude,
+        ...(doc.earthquake?.magnitude !== undefined ? { magnitude: doc.earthquake.magnitude } : {}),
+        ...(doc.earthquake
+          ? {
+              latitude: doc.earthquake.latitude,
+              longitude: doc.earthquake.longitude,
+              ...(doc.earthquake.place !== undefined ? { place: doc.earthquake.place } : {}),
+              ...(doc.earthquake.occurredAt !== undefined
+                ? { occurredAt: doc.earthquake.occurredAt }
+                : {}),
+            }
+          : {}),
       }))
   }
 

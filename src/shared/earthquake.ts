@@ -97,6 +97,15 @@ export const getIntensityLabel = (
   return 'severe'
 }
 
+/** Returns a progressively larger Leaflet marker radius for stronger earthquakes. */
+export const getEarthquakeMarkerRadius = (magnitude: number | undefined): number => {
+  if (magnitude === undefined || magnitude < 4) return 5
+  if (magnitude < 5) return 8
+  if (magnitude < 6) return 12
+  if (magnitude < 7) return 17
+  return 23
+}
+
 /** Estimates wavefront radius and countdown using the message speed and transport delay. */
 export const calculateEarthquakeWaveState = (
   distanceKm: number,

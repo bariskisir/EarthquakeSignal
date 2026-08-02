@@ -116,6 +116,9 @@ describe('StorageService', () => {
       latitude: 39.9,
       longitude: 32.8,
       receivedAt: '2026-01-01T00:00:00.000Z',
+      occurredAt: '2025-12-31T23:59:00.000Z',
+      magnitude: 4.6,
+      place: 'Ankara',
       revision: 1,
       estimatedIntensity: 2.4,
     }
@@ -127,6 +130,15 @@ describe('StorageService', () => {
 
     expect(updated.id).toBe(created.id)
     expect(updated.earthquake?.revision).toBe(2)
-    expect(await storage.listSessions()).toHaveLength(1)
+    expect(await storage.listSessions()).toEqual([
+      expect.objectContaining({
+        id: created.id,
+        latitude: 39.9,
+        longitude: 32.8,
+        magnitude: 4.6,
+        place: 'Ankara',
+        occurredAt: '2025-12-31T23:59:00.000Z',
+      }),
+    ])
   })
 })

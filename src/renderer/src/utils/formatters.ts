@@ -23,4 +23,24 @@ export const formatDate = (isoDate: string, timeFormat: TimeFormat): string => {
 }
 
 /** Converts a complete session into a compact history summary. */
-export const toSessionSummary = (session: SessionDocument): SessionSummary => ({ ...session })
+export const toSessionSummary = (session: SessionDocument): SessionSummary => ({
+  id: session.id,
+  title: session.title,
+  isDefaultTitle: session.isDefaultTitle,
+  createdAt: session.createdAt,
+  updatedAt: session.updatedAt,
+  ...(session.magnitude !== undefined ? { magnitude: session.magnitude } : {}),
+  ...(session.earthquake?.magnitude !== undefined
+    ? { magnitude: session.earthquake.magnitude }
+    : {}),
+  ...(session.earthquake
+    ? {
+        latitude: session.earthquake.latitude,
+        longitude: session.earthquake.longitude,
+        ...(session.earthquake.place !== undefined ? { place: session.earthquake.place } : {}),
+        ...(session.earthquake.occurredAt !== undefined
+          ? { occurredAt: session.earthquake.occurredAt }
+          : {}),
+      }
+    : {}),
+})
