@@ -16,7 +16,7 @@ import { setEarthquakeFilter } from '@renderer/store/appSlice'
 import { formatDate } from '@renderer/utils/formatters'
 import styles from './SessionsSidebar.module.scss'
 
-const FILTER_OPTIONS: EarthquakeFilter[] = ['all', '4', '5']
+const FILTER_OPTIONS: EarthquakeFilter[] = ['all', '3', '4', '5']
 
 /** Renders open, rename, delete, and collapse actions for server-provided sessions. */
 const SessionsSidebar = (): React.JSX.Element => {

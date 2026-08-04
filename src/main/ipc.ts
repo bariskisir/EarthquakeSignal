@@ -33,7 +33,7 @@ const rendererLogSchema = z.object({
   details: z.string().max(8_000).optional(),
 })
 const earthquakeTestKindSchema = z.enum(['realtime', 'seismic-network'])
-const earthquakeFilterSchema = z.enum(['all', '4', '5'])
+const earthquakeFilterSchema = z.enum(['all', '3', '4', '5'])
 
 const TRUSTED_EXTERNAL_ORIGINS = new Set(['https://github.com', APP_AUTHOR_URL])
 

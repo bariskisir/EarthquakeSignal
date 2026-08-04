@@ -20,7 +20,7 @@ export type EarthquakeNotificationPresentation =
   (typeof EARTHQUAKE_NOTIFICATION_PRESENTATIONS)[number]
 export type DesktopPlatform = 'win32' | 'darwin' | 'linux'
 /** Selects all earthquakes or those at-or-above one supported magnitude threshold. */
-export type EarthquakeFilter = 'all' | '4' | '5'
+export type EarthquakeFilter = 'all' | '3' | '4' | '5'
 
 export interface AppSettings {
   settingsRevision: 3

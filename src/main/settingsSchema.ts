@@ -39,7 +39,7 @@ const settingsFieldsSchema = z.object({
   seismicMinimumMagnitude: z.number().min(0).max(10),
   seismicMaximumDistanceKm: z.number().int().min(1).max(20_000),
   seismicNotificationPresentation: z.enum(EARTHQUAKE_NOTIFICATION_PRESENTATIONS),
-  earthquakeFilter: z.enum(['all', '4', '5']),
+  earthquakeFilter: z.enum(['all', '3', '4', '5']),
 })
 
 export const settingsSchema = settingsFieldsSchema.superRefine((settings, context) => {

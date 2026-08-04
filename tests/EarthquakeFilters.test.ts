@@ -21,6 +21,11 @@ describe('filterSessionsByMagnitude', () => {
   })
 
   it('keeps only sessions at or above the selected threshold', () => {
+    expect(filterSessionsByMagnitude(sessions, '3').map(({ id }) => id)).toEqual([
+      'low',
+      'four',
+      'five',
+    ])
     expect(filterSessionsByMagnitude(sessions, '4').map(({ id }) => id)).toEqual(['four', 'five'])
     expect(filterSessionsByMagnitude(sessions, '5').map(({ id }) => id)).toEqual(['five'])
   })

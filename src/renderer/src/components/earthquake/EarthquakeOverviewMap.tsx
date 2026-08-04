@@ -115,13 +115,7 @@ const EarthquakeOverviewMap = ({
       weight: 3,
       fillColor: '#4f46e5',
       fillOpacity: 1,
-    })
-      .bindTooltip(t('earthquake.yourLocation'), {
-        permanent: true,
-        direction: 'bottom',
-        className: styles.markerTooltip ?? '',
-      })
-      .addTo(map)
+    }).addTo(map)
 
     const bounds = L.latLngBounds([userLocation, ...earthquakes.map(({ location }) => location)])
     /** Keeps every filtered epicentre visible after the workspace changes size. */
@@ -151,9 +145,6 @@ const EarthquakeOverviewMap = ({
     <div className={styles.shell}>
       <div ref={mapElementRef} className={styles.map} />
       <div className={styles.legend}>
-        <span>
-          <i className={styles.userDot} /> {t('earthquake.yourLocation')}
-        </span>
         <span>
           <i className={styles.earthquakeDot} /> {t('earthquake.earthquakeCenter')}
         </span>
