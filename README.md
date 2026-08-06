@@ -1,10 +1,25 @@
-# Earthquake Signal
+<p align="center">
+  <img src="build/icon.png" alt="Earthquake Signal logo" width="88">
+</p>
 
-Earthquake Signal is an Electron desktop application that receives normal and real-time earthquake alerts, displays events and their distance from your location on a map, and provides configurable notifications and full-screen warnings.
+<h1 align="center">Earthquake Signal</h1>
 
-![Earthquake Signal interface](images/interface.png)
-![Earthquake Signal interface](images/interface2.png)
-![Earthquake Signal interface](images/interface_realtime.png)
+<p align="center">
+  Real-time earthquake alerts with a map and full-screen warnings.
+</p>
+
+<p align="center">
+  <a href="https://github.com/bariskisir/EarthquakeSignal/actions/workflows/release.yml"><img src="https://github.com/bariskisir/EarthquakeSignal/actions/workflows/release.yml/badge.svg" alt="CI status"></a>
+  <a href="https://github.com/bariskisir/EarthquakeSignal/releases/latest"><img src="https://img.shields.io/github/v/release/bariskisir/EarthquakeSignal" alt="Latest release"></a>
+  <a href="https://github.com/bariskisir/EarthquakeSignal/releases"><img src="https://img.shields.io/github/downloads/bariskisir/EarthquakeSignal/total" alt="Total downloads"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+</p>
+
+<p align="center">
+  <img src="images/interface.png" alt="Earthquake Signal interface" width="840">
+  <img src="images/interface2.png" alt="Earthquake Signal interface" width="840">
+  <img src="images/interface_realtime.png" alt="Earthquake Signal real-time interface" width="840">
+</p>
 
 ---
 
