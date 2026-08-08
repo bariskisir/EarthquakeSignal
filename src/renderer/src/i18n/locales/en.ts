@@ -138,6 +138,7 @@ const en = {
     general: 'General',
     display: 'Display',
     updates: 'Updates',
+    telemetry: 'Telemetry',
     logging: 'Logging',
     about: 'About',
     interfaceLanguage: 'Interface language',
@@ -188,6 +189,9 @@ const en = {
     installNow: 'Install and restart',
     openDownloadPage: 'Open download page',
     releaseNotes: 'Release notes',
+    telemetryCollection: 'Share anonymous usage telemetry',
+    telemetryDescription:
+      'At application startup, an anonymous installation ID, version, platform, and interface locale are sent to count active users. Microsoft derives an approximate country and city from the connection IP. No earthquake data is sent.',
     updateError: 'Update check failed.',
     version: 'Version {{version}}',
     logLevel: 'Log level',

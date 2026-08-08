@@ -142,6 +142,7 @@ const fr = {
     general: 'Général',
     display: 'Affichage',
     updates: 'Mises à jour',
+    telemetry: 'Télémétrie',
     logging: 'Journalisation',
     about: 'À propos',
     interfaceLanguage: "Langue de l'interface",
@@ -192,6 +193,9 @@ const fr = {
     installNow: 'Installer et redémarrer',
     openDownloadPage: 'Ouvrir la page de téléchargement',
     releaseNotes: 'Notes de version',
+    telemetryCollection: "Partager les données d'utilisation anonymes",
+    telemetryDescription:
+      "Au démarrage de l'application, un identifiant d'installation anonyme, la version, la plateforme et la langue de l'interface sont envoyés pour compter les utilisateurs actifs. Microsoft déduit un pays et une ville approximatifs de l'adresse IP de connexion. Aucune donnée sismique n'est envoyée.",
     updateError: 'Échec de la recherche de mise à jour.',
     version: 'Version {{version}}',
     logLevel: 'Niveau de journal',

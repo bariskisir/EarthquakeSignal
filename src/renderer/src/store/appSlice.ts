@@ -15,7 +15,8 @@ import {
 } from '@shared/types'
 
 export type AppPage = 'home' | 'settings'
-export type SettingsSection = 'general' | 'earthquake' | 'display' | 'updates' | 'about' | 'logging'
+export type SettingsSection =
+  'general' | 'earthquake' | 'display' | 'updates' | 'telemetry' | 'about' | 'logging'
 export interface AppState {
   initialized: boolean
   page: AppPage

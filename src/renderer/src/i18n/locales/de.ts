@@ -142,6 +142,7 @@ const de = {
     general: 'Allgemein',
     display: 'Anzeige',
     updates: 'Updates',
+    telemetry: 'Telemetrie',
     logging: 'Protokollierung',
     about: 'Über',
     interfaceLanguage: 'Oberflächensprache',
@@ -192,6 +193,9 @@ const de = {
     installNow: 'Installieren und neu starten',
     openDownloadPage: 'Download-Seite öffnen',
     releaseNotes: 'Versionshinweise',
+    telemetryCollection: 'Anonyme Nutzungstelemetrie teilen',
+    telemetryDescription:
+      'Beim Start der Anwendung werden eine anonyme Installations-ID, Version, Plattform und Oberflächensprache gesendet, um aktive Nutzer zu zählen. Microsoft leitet aus der Verbindungs-IP ein ungefähres Land und eine Stadt ab. Es werden keine Erdbebendaten gesendet.',
     updateError: 'Update-Prüfung fehlgeschlagen.',
     version: 'Version {{version}}',
     logLevel: 'Protokollstufe',
