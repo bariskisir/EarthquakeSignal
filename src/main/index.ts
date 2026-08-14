@@ -109,7 +109,11 @@ const openApplicationWindow = async (startHidden = false): Promise<void> => {
   updater.applySettings(settings)
   const initialNotificationActivation = parseNotificationActivation(process.argv)
   const shouldStartHidden = startHidden && initialNotificationActivation === null
-  const window = await windowService.createWindow(logger, !shouldStartHidden)
+  const window = await windowService.createWindow(
+    logger,
+    !shouldStartHidden,
+    settings.startMinimized,
+  )
   earthquakeService?.dispose()
   const earthquake = new EarthquakeService(
     storage,

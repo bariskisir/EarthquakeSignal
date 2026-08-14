@@ -141,6 +141,7 @@ const fr = {
     title: 'Paramètres',
     general: 'Général',
     display: 'Affichage',
+    tray: 'Zone de notification',
     updates: 'Mises à jour',
     telemetry: 'Télémétrie',
     logging: 'Journalisation',
@@ -175,7 +176,10 @@ const fr = {
     showTrayIconDescription: 'Afficher Earthquake Signal dans la zone de notification.',
     minimizeToTrayOnClose: 'Réduire dans la zone de notification à la fermeture',
     minimizeToTrayOnCloseDescription:
-      "Masquez la fenêtre dans la zone de notification au lieu de quitter l'application.",
+      'Masquer la fenêtre dans la zone de notification à la fermeture au lieu de quitter.',
+    startMinimized: 'Démarrer réduit',
+    startMinimizedDescription:
+      "Démarrez l'application cachée dans la zone de notification au lieu d'afficher sa fenêtre.",
     trayUnavailable: 'L’intégration à la zone de notification n’est pas disponible sous Linux.',
     alwaysOnTop: 'Toujours au premier plan',
     checkUpdatesOnStartup: 'Rechercher les mises à jour au démarrage',

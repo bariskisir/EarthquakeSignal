@@ -2,7 +2,16 @@
  * Renders the reusable settings shell and delegates each category to an isolated section.
  */
 
-import { Activity, Gauge, Info, Monitor, RefreshCw, ScrollText, Settings2 } from 'lucide-react'
+import {
+  Activity,
+  Gauge,
+  Info,
+  Inbox,
+  Monitor,
+  RefreshCw,
+  ScrollText,
+  Settings2,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { setSettingsSection, type SettingsSection } from '@renderer/store/appSlice'
@@ -11,6 +20,7 @@ import GeneralSettingsSection from './sections/GeneralSettingsSection'
 import DisplaySettingsSection from './sections/DisplaySettingsSection'
 import EarthquakeSettingsSection from './sections/EarthquakeSettingsSection'
 import LoggingSettingsSection from './sections/LoggingSettingsSection'
+import TraySettingsSection from './sections/TraySettingsSection'
 import TelemetrySettingsSection from './sections/TelemetrySettingsSection'
 import UpdatesSettingsSection from './sections/UpdatesSettingsSection'
 import styles from './SettingsPage.module.scss'
@@ -27,6 +37,7 @@ const SettingsPage = (): React.JSX.Element => {
   }> = [
     { key: 'general', label: t('settings.general'), icon: <Settings2 size={17} /> },
     { key: 'display', label: t('settings.display'), icon: <Monitor size={17} /> },
+    { key: 'tray', label: t('settings.tray'), icon: <Inbox size={17} /> },
     { key: 'earthquake', label: t('earthquake.title'), icon: <Activity size={17} /> },
     { key: 'updates', label: t('settings.updates'), icon: <RefreshCw size={17} /> },
     { key: 'telemetry', label: t('settings.telemetry'), icon: <Gauge size={17} /> },
@@ -37,6 +48,7 @@ const SettingsPage = (): React.JSX.Element => {
   /** Resolves the active category component without keeping inactive forms mounted. */
   const renderSection = (): React.JSX.Element => {
     if (section === 'display') return <DisplaySettingsSection />
+    if (section === 'tray') return <TraySettingsSection />
     if (section === 'earthquake') return <EarthquakeSettingsSection />
     if (section === 'updates') return <UpdatesSettingsSection />
     if (section === 'telemetry') return <TelemetrySettingsSection />

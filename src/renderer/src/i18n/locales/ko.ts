@@ -134,6 +134,7 @@ const ko = {
     title: '설정',
     general: '일반',
     display: '디스플레이',
+    tray: '트레이',
     updates: '업데이트',
     telemetry: '원격 분석',
     logging: '로깅',
@@ -168,6 +169,9 @@ const ko = {
     showTrayIconDescription: '시스템 트레이에 Earthquake Signal을 표시합니다.',
     minimizeToTrayOnClose: '닫을 때 트레이로 최소화',
     minimizeToTrayOnCloseDescription: '창을 닫을 때 종료하지 않고 시스템 트레이로 숨깁니다.',
+    startMinimized: '최소화로 시작',
+    startMinimizedDescription:
+      '창을 표시하지 않고 시스템 트레이에 숨긴 상태로 애플리케이션을 시작합니다.',
     trayUnavailable: 'Linux에서는 시스템 트레이 연동을 사용할 수 없습니다.',
     alwaysOnTop: '항상 위에 표시',
     checkUpdatesOnStartup: '시작 시 업데이트 확인',

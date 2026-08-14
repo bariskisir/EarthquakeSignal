@@ -74,15 +74,15 @@ EarthquakeSignal/
 |           |-- i18n/locales/            # en, tr, de, fr, pt, zh, es, ru, ja, ko
 |           |-- pages/
 |           |   |-- home/                # Earthquake list, map, and event details
-|           |   `-- settings/            # General, Display, Earthquake, Updates, Logging, About
+|           |   `-- settings/            # General, Display, Tray, Earthquake, Updates, Logging, About
 |           |-- services/                # Renderer logger, settings queue, bundled alarm
 |           |-- store/                   # Single Redux app slice
 |           `-- utils/                   # Date and session-summary formatting
-|-- tests/                               # 13 Vitest files / 100 tests at time of writing
+|-- tests/                               # 19 Vitest files / 132 tests at time of writing
 |-- build/                               # Product icon used by Electron and the tray
 |-- images/                              # README screenshots
-|-- vite.config.ts
-|-- vitest.config.ts
+|-- vite.config.mts
+|-- vitest.config.mts
 |-- tsconfig.json
 |-- tsconfig.node.json
 |-- tsconfig.web.json
@@ -351,6 +351,9 @@ Repeated event IDs are upserted so newer revisions replace the existing stored e
   tray without flashing the main window.
 - Start-on-login implies a usable tray icon. Closing the window hides it only when close-to-tray is
   enabled and the tray was created successfully.
+- Tray settings default to enabled (`showTrayIcon`, `minimizeToTrayOnClose`, `startMinimized`). The
+  start-minimized preference hides the window to the tray on launch whenever the tray icon is
+  enabled.
 - Linux disables tray-dependent settings in the IPC layer.
 - Windows native toast clicks use the `earthquake-signal://notification?sessionId=<uuid>` protocol.
 - Fullscreen transitions save and restore prior window bounds, maximize state, visibility, and

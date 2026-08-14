@@ -16,7 +16,7 @@ import {
 
 export type AppPage = 'home' | 'settings'
 export type SettingsSection =
-  'general' | 'earthquake' | 'display' | 'updates' | 'telemetry' | 'about' | 'logging'
+  'general' | 'earthquake' | 'display' | 'tray' | 'updates' | 'telemetry' | 'about' | 'logging'
 export interface AppState {
   initialized: boolean
   page: AppPage

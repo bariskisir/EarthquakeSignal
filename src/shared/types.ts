@@ -33,6 +33,7 @@ export interface AppSettings {
   alwaysOnTop: boolean
   showTrayIcon: boolean
   minimizeToTrayOnClose: boolean
+  startMinimized: boolean
   autoUpdate: boolean
   telemetryEnabled: boolean
   unattendedUpdates: boolean
@@ -65,6 +66,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   alwaysOnTop: false,
   showTrayIcon: true,
   minimizeToTrayOnClose: true,
+  startMinimized: true,
   autoUpdate: true,
   telemetryEnabled: true,
   unattendedUpdates: true,
