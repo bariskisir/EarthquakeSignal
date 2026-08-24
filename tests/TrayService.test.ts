@@ -12,7 +12,6 @@ const electronMocks = vi.hoisted(() => {
     public readonly handlers = new Map<string, () => void>()
     public readonly destroy = vi.fn()
     public readonly setContextMenu = vi.fn()
-    public readonly setToolTip = vi.fn()
 
     public on(event: string, listener: () => void): void {
       this.handlers.set(event, listener)
@@ -150,5 +149,16 @@ describe('TrayService', () => {
 
     menu[1]?.click?.()
     expect(window.webContents.send).toHaveBeenCalledWith('event:settings-open-requested')
+  })
+
+  it('opens the window from the primary tray activation', () => {
+    const window = createWindow()
+    new TrayService(window, { showTrayIcon: true, minimizeToTrayOnClose: true }, createLogger())
+    const tray = electronMocks.instances[0]
+
+    tray?.handlers.get('click')?.()
+
+    expect(window.show).toHaveBeenCalledOnce()
+    expect(window.focus).toHaveBeenCalledOnce()
   })
 })

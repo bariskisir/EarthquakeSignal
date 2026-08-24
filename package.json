@@ -1,6 +1,6 @@
 {
   "name": "earthquake-signal",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "Earthquake Signal desktop application",
   "main": "./out/main/index.js",
   "author": "bariskisir",
@@ -42,7 +42,7 @@
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.5",
     "antd": "6.5.4",
-    "electron": "43.3.0",
+    "electron": "43.2.0",
     "electron-builder": "26.15.3",
     "i18next": "26.3.6",
     "jsdom": "30.0.1",

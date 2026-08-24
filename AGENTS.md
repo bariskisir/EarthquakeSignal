@@ -354,7 +354,9 @@ Repeated event IDs are upserted so newer revisions replace the existing stored e
 - Tray settings default to enabled (`showTrayIcon`, `minimizeToTrayOnClose`, `startMinimized`). The
   start-minimized preference hides the window to the tray on launch whenever the tray icon is
   enabled.
-- Linux disables tray-dependent settings in the IPC layer.
+- Linux uses the native tray icon; primary activation opens the window and the secondary button
+  opens the standard tray menu. Linux development launches use XWayland (`--ozone-platform=x11`)
+  so tray/window behavior remains consistent under GNOME.
 - Windows native toast clicks use the `earthquake-signal://notification?sessionId=<uuid>` protocol.
 - Fullscreen transitions save and restore prior window bounds, maximize state, visibility, and
   always-on-top state.

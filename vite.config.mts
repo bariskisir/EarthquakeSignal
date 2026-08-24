@@ -19,7 +19,9 @@ const startElectron = async ({
     options?: import('node:child_process').SpawnOptions,
   ) => Promise<boolean>
 }): Promise<void> => {
-  await startup(['.'], { cwd: repositoryRoot })
+  await startup(process.platform === 'linux' ? ['.', '--ozone-platform=x11'] : ['.'], {
+    cwd: repositoryRoot,
+  })
 }
 
 export default defineConfig({
