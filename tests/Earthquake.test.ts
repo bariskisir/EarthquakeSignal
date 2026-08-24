@@ -10,6 +10,8 @@ import {
   createEarthquakeTopics,
   estimateEarthquakeNetworkIntensity,
   getEarthquakeMarkerRadius,
+  isWithinStartupAlertQuietPeriod,
+  STARTUP_ALERT_QUIET_PERIOD_MS,
 } from '../src/shared/earthquake'
 
 describe('earthquake utilities', () => {
@@ -73,5 +75,16 @@ describe('earthquake utilities', () => {
     expect(getEarthquakeMarkerRadius(6)).toBe(17)
     expect(getEarthquakeMarkerRadius(7)).toBe(23)
     expect(getEarthquakeMarkerRadius(9.2)).toBe(23)
+  })
+
+  it('keeps the startup alert quiet period strictly below one minute', () => {
+    expect(STARTUP_ALERT_QUIET_PERIOD_MS).toBe(60_000)
+    const startedAt = Date.parse('2026-08-25T01:00:03.000Z')
+    expect(isWithinStartupAlertQuietPeriod(startedAt, startedAt)).toBe(true)
+    expect(isWithinStartupAlertQuietPeriod(startedAt, startedAt + 59_999)).toBe(true)
+    expect(
+      isWithinStartupAlertQuietPeriod(startedAt, startedAt + STARTUP_ALERT_QUIET_PERIOD_MS),
+    ).toBe(false)
+    expect(isWithinStartupAlertQuietPeriod(startedAt, startedAt + 61_000)).toBe(false)
   })
 })

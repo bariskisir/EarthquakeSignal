@@ -4,6 +4,7 @@
 
 export const EARTHQUAKE_GLOBAL_TOPIC = 'global'
 export const ESTIMATED_S_WAVE_SPEED_KM_PER_SECOND = 3.5
+export const STARTUP_ALERT_QUIET_PERIOD_MS = 60 * 1000
 const EARTH_RADIUS_KM = 6_371
 const EARTHQUAKE_NETWORK_ATTENUATION_SCALE = 162_103_724
 
@@ -96,6 +97,19 @@ export const getIntensityLabel = (
   if (intensity < 9) return 'very-strong'
   return 'severe'
 }
+
+/**
+ * Decides whether events received during the first minute after launch stay silent.
+ *
+ * FCM replays the offline message backlog right after the receiver connects, so events
+ * processed inside this window are persisted without notifications or fullscreen alerts.
+ * The comparison only uses monotonic process-relative clocks and never parses locale
+ * timestamps, keeping it free of time-zone assumptions.
+ */
+export const isWithinStartupAlertQuietPeriod = (
+  startedAtMs: number,
+  nowMs: number = Date.now(),
+): boolean => nowMs - startedAtMs < STARTUP_ALERT_QUIET_PERIOD_MS
 
 /** Returns a progressively larger Leaflet marker radius for stronger earthquakes. */
 export const getEarthquakeMarkerRadius = (magnitude: number | undefined): number => {

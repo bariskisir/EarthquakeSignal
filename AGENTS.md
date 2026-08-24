@@ -301,6 +301,9 @@ Repeated event IDs are upserted so newer revisions replace the existing stored e
   most three minutes or when the alert is dismissed with Escape.
 - Seismic-network notifications require the feature enabled, magnitude at least the configured
   minimum, and distance within the configured maximum. Defaults are magnitude 3 and 1000 km.
+- Startup quiet period: events delivered during the first minute after launch are persisted and
+  listed but never notify, present fullscreen, or play the alarm, because FCM replays the offline
+  backlog right after connecting. Settings test simulations bypass the quiet period.
 - The old Relevant/Custom notification-filter selector has been removed; do not reintroduce it.
 - The seismic presentation default is normal; realtime presentation default is fullscreen.
 - Clicking any normal native notification opens the Earthquakes list and selects the stored event.

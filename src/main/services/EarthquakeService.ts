@@ -20,6 +20,7 @@ import {
   calculateDistanceKm,
   createEarthquakeTopics,
   estimateEarthquakeNetworkIntensity,
+  isWithinStartupAlertQuietPeriod,
 } from '@shared/earthquake'
 import {
   createEarthquakeNotificationUrl,
@@ -108,6 +109,9 @@ type StatusListener = (status: EarthquakeServiceStatus) => void
 type EarthquakeListener = (event: EarthquakeReceivedEvent) => void
 type NotificationOpenListener = (event: EarthquakeNotificationOpenEvent) => void
 
+/** Distinguishes live receiver deliveries from user-requested test simulations. */
+type EarthquakeProcessingSource = 'receiver' | 'test'
+
 /** Coordinates the long-lived desktop FCM receiver and earthquake notification policy. */
 export default class EarthquakeService {
   private settings: AppSettings
@@ -119,6 +123,7 @@ export default class EarthquakeService {
   private fullscreenWindowState: FullscreenWindowState | null = null
   private fullscreenRetryTimers: NodeJS.Timeout[] = []
   private powerMonitoringActive = false
+  private readonly startedAtMs = Date.now()
   private status: EarthquakeServiceStatus
   private readonly statusListeners = new Set<StatusListener>()
   private readonly earthquakeListeners = new Set<EarthquakeListener>()
@@ -283,7 +288,7 @@ export default class EarthquakeService {
           }
         : { warning: 'Seismic network notification test' }),
     }
-    return (await this.processEarthquake(earthquake)).session
+    return (await this.processEarthquake(earthquake, 'test')).session
   }
 
   /** Stops timers and the underlying persistent FCM socket. */
@@ -818,11 +823,31 @@ export default class EarthquakeService {
     }
   }
 
-  /** Runs one normalized event through shared production side effects. */
-  private async processEarthquake(earthquake: EarthquakeEvent): Promise<EarthquakeReceivedEvent> {
+  /**
+   * Runs one normalized event through shared production side effects.
+   *
+   * Events delivered during the first minute after launch are still persisted and listed,
+   * but their notifications, fullscreen presentation, and alarm stay silent because FCM
+   * replays the offline backlog right after connecting. Test simulations bypass the quiet
+   * period.
+   */
+  private async processEarthquake(
+    earthquake: EarthquakeEvent,
+    source: EarthquakeProcessingSource = 'receiver',
+  ): Promise<EarthquakeReceivedEvent> {
     const title = this.createSessionTitle(earthquake)
     const session = await this.storage.upsertEarthquakeSession(earthquake, title)
-    const shouldNotify = this.shouldNotify(earthquake)
+    const suppressedForStartup =
+      source === 'receiver' && isWithinStartupAlertQuietPeriod(this.startedAtMs)
+    const shouldNotify = !suppressedForStartup && this.shouldNotify(earthquake)
+    if (suppressedForStartup) {
+      this.logger.info('EarthquakeService', 'Event received during startup quiet period.', {
+        id: earthquake.id,
+        kind: earthquake.kind,
+        occurredAt: earthquake.occurredAt,
+        receivedAt: earthquake.receivedAt,
+      })
+    }
     const presentation = this.resolvePresentation(earthquake, shouldNotify)
     if (shouldNotify) {
       this.showNativeNotification(earthquake, title, session.id)
