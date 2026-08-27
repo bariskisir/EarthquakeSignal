@@ -100,8 +100,12 @@ export const getMapTileConfig = (
     const style = isDark ? 'dark_all' : 'light_all'
     const baseUrl = `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`
     const apiKey = mapApiKey?.trim()
+    // CARTO docs show `?key=` for new rastertiles endpoint and `?api_key=` for legacy;
+    // send both to stay compatible with either.
     return {
-      url: apiKey ? `${baseUrl}?api_key=${encodeURIComponent(apiKey)}` : baseUrl,
+      url: apiKey
+        ? `${baseUrl}?key=${encodeURIComponent(apiKey)}&api_key=${encodeURIComponent(apiKey)}`
+        : baseUrl,
       attribution: '© OpenStreetMap contributors © CARTO',
     }
   }

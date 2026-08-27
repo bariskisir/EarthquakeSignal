@@ -103,9 +103,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   seismicMaximumDistanceKm: 1_000,
   seismicNotificationPresentation: 'normal',
   earthquakeFilter: 'all',
-  mapTileProvider: 'google',
-  mapTheme: 'light',
-  mapApiKey: '',
+  mapTileProvider: 'carto',
+  mapTheme: 'system',
+  mapApiKey: 'cb1_2a37_1_fb5b15a9e0d35ff717f00a83',
 }
 
 export type EarthquakeEventKind = 'realtime' | 'seismic-network'
