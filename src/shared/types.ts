@@ -10,6 +10,20 @@ export const PAGE_ZOOM_LIMITS = { min: 0.5, max: 2, step: 0.1, default: 1 } as c
 export const TIME_FORMATS = ['24-hour', '12-hour'] as const
 export const LOG_LEVELS = ['error', 'warn', 'info', 'debug', 'verbose'] as const
 export const EARTHQUAKE_NOTIFICATION_PRESENTATIONS = ['fullscreen', 'normal'] as const
+export const MAP_TILE_PROVIDERS = [
+  'esri',
+  'esriStreet',
+  'esriImagery',
+  'esriTopo',
+  'osm',
+  'osmHot',
+  'openTopoMap',
+  'cyclOsm',
+  'wikimedia',
+  'carto',
+  'google',
+] as const
+export const MAP_THEME_MODES = ['system', 'light', 'dark'] as const
 
 export type AppLocale = (typeof APP_LOCALES)[number]
 export type ThemeMode = (typeof THEME_MODES)[number]
@@ -18,7 +32,11 @@ export type TimeFormat = (typeof TIME_FORMATS)[number]
 export type LogLevel = (typeof LOG_LEVELS)[number]
 export type EarthquakeNotificationPresentation =
   (typeof EARTHQUAKE_NOTIFICATION_PRESENTATIONS)[number]
+export type MapTileProvider = (typeof MAP_TILE_PROVIDERS)[number]
+export type MapThemeMode = (typeof MAP_THEME_MODES)[number]
 export type DesktopPlatform = 'win32' | 'darwin' | 'linux'
+
+export const MAP_TILE_PROVIDERS_REQUIRING_API_KEY: readonly MapTileProvider[] = ['carto'] as const
 /** Selects all earthquakes or those at-or-above one supported magnitude threshold. */
 export type EarthquakeFilter = 'all' | '3' | '4' | '5'
 
@@ -49,6 +67,9 @@ export interface AppSettings {
   seismicMaximumDistanceKm: number
   seismicNotificationPresentation: EarthquakeNotificationPresentation
   earthquakeFilter: EarthquakeFilter
+  mapTileProvider: MapTileProvider
+  mapTheme: MapThemeMode
+  mapApiKey: string
 }
 
 export type AppSettingsPatch = {
@@ -82,6 +103,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   seismicMaximumDistanceKm: 1_000,
   seismicNotificationPresentation: 'normal',
   earthquakeFilter: 'all',
+  mapTileProvider: 'google',
+  mapTheme: 'light',
+  mapApiKey: '',
 }
 
 export type EarthquakeEventKind = 'realtime' | 'seismic-network'

@@ -184,6 +184,18 @@
   cursor: pointer;
 }
 
+:global(.osm-dark-tiles),
+:global(.google-dark-tiles),
+:global(.osmHot-dark-tiles),
+:global(.openTopoMap-dark-tiles),
+:global(.cyclOsm-dark-tiles),
+:global(.wikimedia-dark-tiles),
+:global(.esriStreet-dark-tiles),
+:global(.esriImagery-dark-tiles),
+:global(.esriTopo-dark-tiles) {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
 @media (max-width: 700px) {
   .legend span {
     display: none;

@@ -7,6 +7,7 @@ import { App as AntdApp, Button, InputNumber, Popconfirm, Select, Space, Switch,
 import L from 'leaflet'
 import { useTranslation } from 'react-i18next'
 import { createEarthquakeTopics } from '@shared/earthquake'
+import { getMapTileConfig, resolveMapIsDark } from '@shared/mapTiles'
 import {
   EARTHQUAKE_NOTIFICATION_PRESENTATIONS,
   type EarthquakeEventKind,
@@ -34,7 +35,7 @@ const EarthquakeSettingsSection = (): React.JSX.Element => {
     settings.earthquakeLongitude,
   ])
   const mapRef = useRef<L.Map | null>(null)
-  const tileLayerRef = useRef<L.TileLayer | null>(null)
+  const tileLayerRef = useRef<L.Layer | null>(null)
   const markerRef = useRef<L.CircleMarker | null>(null)
   const [latitude, setLatitude] = useState(settings.earthquakeLatitude)
   const [longitude, setLongitude] = useState(settings.earthquakeLongitude)
@@ -76,17 +77,21 @@ const EarthquakeSettingsSection = (): React.JSX.Element => {
     }
   }, [])
 
+  const isDark = resolveMapIsDark(settings.mapTheme, theme)
+
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
     tileLayerRef.current?.removeFrom(map)
-    const style = theme === 'dark' ? 'dark_all' : 'light_all'
-    const layer = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`, {
+    const tileConfig = getMapTileConfig(settings.mapTileProvider, isDark, settings.mapApiKey)
+    const tileLayer = L.tileLayer(tileConfig.url, {
       maxZoom: 19,
+      attribution: tileConfig.attribution,
+      className: tileConfig.className ?? '',
     }).addTo(map)
-    layer.bringToBack()
-    tileLayerRef.current = layer
-  }, [theme])
+    tileLayer.bringToBack()
+    tileLayerRef.current = tileLayer
+  }, [isDark, settings.mapApiKey, settings.mapTileProvider])
 
   useEffect(() => {
     markerRef.current?.setLatLng([latitude, longitude])

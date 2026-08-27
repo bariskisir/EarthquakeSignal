@@ -164,7 +164,7 @@
 }
 
 .wideControl {
-  width: 250px;
+  width: 320px;
 }
 
 .modelSelect {
@@ -354,6 +354,33 @@
   :global(.leaflet-control-zoom a:hover) {
     color: var(--color-primary);
     background: var(--color-background-soft);
+  }
+}
+
+.mapPreview {
+  width: 100%;
+  height: 360px;
+  overflow: hidden;
+  margin-top: 8px;
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--list-item-radius);
+  background: var(--color-background-soft);
+
+  :global(.leaflet-control-zoom a) {
+    color: var(--color-text-1);
+    background: var(--color-background);
+    border-color: var(--color-border);
+  }
+
+  :global(.leaflet-control-zoom a:hover) {
+    color: var(--color-primary);
+    background: var(--color-background-soft);
+  }
+
+  :global(.leaflet-control-attribution) {
+    color: var(--color-text-3);
+    background: color-mix(in srgb, var(--color-background) 82%, transparent);
+    font-size: 10px;
   }
 }
 

@@ -9,7 +9,9 @@ import {
   type EarthquakeWaveState,
 } from '@shared/earthquake'
 import type { EarthquakeEvent } from '@shared/types'
+import { getMapTileConfig, resolveMapIsDark } from '@shared/mapTiles'
 import { useTheme } from '@renderer/context/ThemeProvider'
+import { useAppSelector } from '@renderer/store'
 import styles from './EarthquakeEventMap.module.scss'
 
 interface EarthquakeEventMapProps {
@@ -29,6 +31,8 @@ const EarthquakeEventMap = ({
   showWave = false,
 }: EarthquakeEventMapProps): React.JSX.Element => {
   const { theme } = useTheme()
+  const { mapTileProvider, mapTheme, mapApiKey } = useAppSelector((state) => state.app.settings)
+  const isDark = resolveMapIsDark(mapTheme, theme)
   const { t } = useTranslation()
   const mapElementRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)
@@ -64,10 +68,11 @@ const EarthquakeEventMap = ({
       zoomControl: true,
       preferCanvas: false,
     })
-    const style = theme === 'dark' ? 'dark_all' : 'light_all'
-    L.tileLayer(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`, {
+    const tileConfig = getMapTileConfig(mapTileProvider, isDark, mapApiKey)
+    L.tileLayer(tileConfig.url, {
       maxZoom: 19,
-      attribution: '© OpenStreetMap contributors © CARTO',
+      attribution: tileConfig.attribution,
+      className: tileConfig.className ?? '',
     }).addTo(map)
 
     if (earthquake.kind === 'realtime' && showWave) {
@@ -89,7 +94,7 @@ const EarthquakeEventMap = ({
     }
 
     L.polyline([eventLocation, userLocation], {
-      color: theme === 'dark' ? '#f8fafc' : '#1f2937',
+      color: isDark ? '#f8fafc' : '#1f2937',
       weight: 2,
       opacity: 0.82,
       dashArray: '8 8',
@@ -174,10 +179,12 @@ const EarthquakeEventMap = ({
     earthquake.latitude,
     earthquake.longitude,
     eventTimestamp,
+    isDark,
+    mapApiKey,
+    mapTileProvider,
     mode,
     showWave,
     t,
-    theme,
     userLatitude,
     userLongitude,
     waveSpeedKmPerSecond,

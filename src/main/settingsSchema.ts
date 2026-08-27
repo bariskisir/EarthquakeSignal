@@ -7,6 +7,8 @@ import {
   DEFAULT_SETTINGS,
   EARTHQUAKE_NOTIFICATION_PRESENTATIONS,
   LOG_LEVELS,
+  MAP_THEME_MODES,
+  MAP_TILE_PROVIDERS,
   NAVBAR_POSITIONS,
   PAGE_ZOOM_LIMITS,
   TIME_FORMATS,
@@ -42,6 +44,9 @@ const settingsFieldsSchema = z.object({
   seismicMaximumDistanceKm: z.number().int().min(1).max(20_000),
   seismicNotificationPresentation: z.enum(EARTHQUAKE_NOTIFICATION_PRESENTATIONS),
   earthquakeFilter: z.enum(['all', '3', '4', '5']),
+  mapTileProvider: z.enum(MAP_TILE_PROVIDERS),
+  mapTheme: z.enum(MAP_THEME_MODES),
+  mapApiKey: z.string().max(512),
 })
 
 export const settingsSchema = settingsFieldsSchema.superRefine((settings, context) => {
@@ -84,6 +89,16 @@ export const parsePersistedSettings = (input: unknown): AppSettings => {
   if (previousRevision < 3) {
     if (persisted.seismicMinimumMagnitude === 3) candidate.seismicMinimumMagnitude = 4
     if (persisted.seismicMaximumDistanceKm === 500) candidate.seismicMaximumDistanceKm = 1_000
+  }
+  if (persisted.mapTheme === 'auto') candidate.mapTheme = 'system' as AppSettings['mapTheme']
+  if (persisted.mapTileProvider === 'openFreeMap')
+    candidate.mapTileProvider = 'google' as AppSettings['mapTileProvider']
+  if (
+    typeof persisted.cartoApiKey === 'string' &&
+    typeof candidate.mapApiKey === 'string' &&
+    candidate.mapApiKey === ''
+  ) {
+    candidate.mapApiKey = persisted.cartoApiKey as string
   }
   const parsed = settingsSchema.safeParse(candidate)
   return parsed.success ? parsed.data : structuredClone(DEFAULT_SETTINGS)
