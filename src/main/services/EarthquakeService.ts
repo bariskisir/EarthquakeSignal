@@ -974,8 +974,6 @@ export default class EarthquakeService {
   ): void {
     try {
       if (Notification.isSupported()) {
-        const notificationTitle =
-          earthquake.kind === 'realtime' ? 'Real-time earthquake alert' : 'Seismic network'
         const body = `${title}${earthquake.distanceKm === undefined ? '' : ` · ${earthquake.distanceKm.toFixed(0)} km`}`
         const protocolUrl = this.notificationProtocol
           ? createEarthquakeNotificationUrl(sessionId)
@@ -984,14 +982,12 @@ export default class EarthquakeService {
           process.platform === 'win32' && protocolUrl
             ? {
                 toastXml: createWindowsEarthquakeToastXml(
-                  notificationTitle,
                   body,
                   protocolUrl,
                   earthquake.kind === 'realtime',
                 ),
               }
             : {
-                title: notificationTitle,
                 body,
                 silent: earthquake.kind === 'realtime',
               },

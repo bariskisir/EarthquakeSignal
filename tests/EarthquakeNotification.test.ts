@@ -25,11 +25,20 @@ describe('earthquake notification activation', () => {
 
   it('escapes toast content and uses protocol activation without a system sound', () => {
     const url = createEarthquakeNotificationUrl(sessionId)
-    const xml = createWindowsEarthquakeToastXml('M <5>', 'A & B', url, true)
+    const xml = createWindowsEarthquakeToastXml('M <5> & A', url, true)
     expect(xml).toContain('activationType="protocol"')
     expect(xml).toContain('sessionId=6ba7b810-9dad-41d1-80b4-00c04fd430c8')
-    expect(xml).toContain('M &lt;5&gt;')
-    expect(xml).toContain('A &amp; B')
+    expect(xml).toContain('M &lt;5&gt; &amp; A')
     expect(xml).toContain('<audio silent="true" />')
+  })
+
+  it('produces a single-line toast like SessionLens without a separate title', () => {
+    const url = createEarthquakeNotificationUrl(sessionId)
+    const xml = createWindowsEarthquakeToastXml('M5.2 Test · 123 km', url, false)
+    const textMatches = xml.match(/<text>/g) ?? []
+    expect(textMatches).toHaveLength(1)
+    expect(xml).toContain('M5.2 Test · 123 km')
+    expect(xml).not.toContain('Real-time earthquake alert')
+    expect(xml).not.toContain('Seismic network')
   })
 })

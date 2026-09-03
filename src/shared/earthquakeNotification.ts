@@ -34,7 +34,6 @@ export const parseEarthquakeNotificationUrl = (
 
 /** Produces ToastGeneric XML whose body click launches the registered protocol handler. */
 export const createWindowsEarthquakeToastXml = (
-  title: string,
   body: string,
   activationUrl: string,
   silent: boolean,
@@ -46,5 +45,5 @@ export const createWindowsEarthquakeToastXml = (
       .replaceAll("'", '&apos;')
       .replaceAll('<', '&lt;')
       .replaceAll('>', '&gt;')
-  return `<toast activationType="protocol" launch="${escapeXml(activationUrl)}"><visual><binding template="ToastGeneric"><text>${escapeXml(title)}</text><text>${escapeXml(body)}</text></binding></visual>${silent ? '<audio silent="true" />' : ''}</toast>`
+  return `<toast activationType="protocol" launch="${escapeXml(activationUrl)}"><visual><binding template="ToastGeneric"><text>${escapeXml(body)}</text></binding></visual>${silent ? '<audio silent="true" />' : ''}</toast>`
 }
