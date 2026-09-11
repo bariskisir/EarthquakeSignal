@@ -1,6 +1,6 @@
 {
   "name": "earthquake-signal",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "description": "Earthquake Signal desktop application",
   "main": "./out/main/index.js",
   "author": "bariskisir",

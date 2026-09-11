@@ -45,6 +45,7 @@ import {
   EARTHQUAKE_NETWORK_UPDATE_TILE_URL,
 } from '../earthquakeNetworkConfig'
 import { isIgnoredMessage, parseEarthquakeEnvelope } from './EarthquakePayloadParser'
+import { httpFetch } from './HttpFetch'
 import type LoggerService from './LoggerService'
 import type StorageService from './StorageService'
 
@@ -577,7 +578,7 @@ export default class EarthquakeService {
     token: string,
     existingUserId?: string,
   ): Promise<string> {
-    const response = await fetch(EARTHQUAKE_NETWORK_REGISTER_URL, {
+    const response = await httpFetch(EARTHQUAKE_NETWORK_REGISTER_URL, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded;charset=utf-8' },
       body: new URLSearchParams({
@@ -611,7 +612,7 @@ export default class EarthquakeService {
   /** Mirrors the APK location-topic report after a successful token registration. */
   private async updateEarthquakeNetworkTile(userId: string, tile: string): Promise<void> {
     if (!tile) throw new Error('Earthquake Network tile topic is empty.')
-    const response = await fetch(EARTHQUAKE_NETWORK_UPDATE_TILE_URL, {
+    const response = await httpFetch(EARTHQUAKE_NETWORK_UPDATE_TILE_URL, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded;charset=utf-8' },
       body: new URLSearchParams({ u_id: userId, tile }),
@@ -647,7 +648,7 @@ export default class EarthquakeService {
       acc: '-1',
       upd: changed ? '1' : '0',
     }
-    const response = await fetch(EARTHQUAKE_NETWORK_UPDATE_LOCATION_URL, {
+    const response = await httpFetch(EARTHQUAKE_NETWORK_UPDATE_LOCATION_URL, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded;charset=utf-8' },
       body: new URLSearchParams(request),
@@ -686,7 +687,7 @@ export default class EarthquakeService {
         `https://firebaseinstallations.googleapis.com/v1/projects/` +
         `${encodeURIComponent(firebase.projectId)}/installations/` +
         `${encodeURIComponent(installation.fid)}/authTokens:generate`
-      const response = await fetch(endpoint, {
+      const response = await httpFetch(endpoint, {
         method: 'POST',
         headers: {
           authorization: `FIS_v2 ${installation.refreshToken}`,
@@ -758,7 +759,7 @@ export default class EarthquakeService {
       topic,
       operation,
     )
-    const response = await fetch(endpoint, {
+    const response = await httpFetch(endpoint, {
       method: 'POST',
       headers: {
         'x-goog-api-key': firebase.apiKey,
