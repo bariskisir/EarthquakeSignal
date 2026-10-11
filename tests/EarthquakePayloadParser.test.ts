@@ -99,4 +99,75 @@ describe('EarthquakePayloadParser', () => {
 
     expect(first?.id).toBe(second?.id)
   })
+
+  it('pulls a timezone-naive realtime occurred hour back to the received hour', () => {
+    const rawOccurred = new Date(Date.now() + 3 * 3_600_000).toISOString()
+    const parsed = parseEarthquakeEnvelope(
+      envelope({
+        type: 'eqn',
+        latitude: 40,
+        longitude: 32,
+        datetime: rawOccurred,
+        code: 'align-1',
+      }),
+      40,
+      32,
+    )
+
+    expect(parsed?.occurredAt).toBeDefined()
+    const skewMs = Math.abs(Date.parse(parsed?.occurredAt ?? '') - Date.now())
+    expect(skewMs).toBeLessThan(5 * 60_000)
+  })
+
+  it('passes zoned seismic-network dates through untouched', () => {
+    const parsed = parseEarthquakeEnvelope(
+      envelope({
+        type: 'official',
+        latitude: '39.1',
+        longitude: '28.2',
+        data: '2026-07-28T13:00:00.000Z',
+        code: 'official-1',
+      }),
+      40,
+      32,
+    )
+
+    expect(parsed?.occurredAt).toBe('2026-07-28T13:00:00.000Z')
+  })
+
+  it('resolves naive EMSC wall-clock strings through the Rome server zone', () => {
+    const parsed = parseEarthquakeEnvelope(
+      envelope({
+        type: 'official',
+        latitude: '39.01',
+        longitude: '35.82',
+        magnitude: '3.6',
+        data: '2026-10-11 02:14:04',
+        provider: 'EMSC',
+        code: 'kayseri-1',
+      }),
+      40,
+      32,
+    )
+
+    expect(parsed?.kind).toBe('seismic-network')
+    expect(parsed?.occurredAt).toBe('2026-10-11T00:14:04.000Z')
+  })
+
+  it('resolves naive BDTIM wall-clock strings through the Rome server zone', () => {
+    const parsed = parseEarthquakeEnvelope(
+      envelope({
+        type: 'official',
+        latitude: '38.404',
+        longitude: '39.1078',
+        data: '2026-10-11 02:57:55',
+        provider: 'BDTIM',
+        code: 'elazig-1',
+      }),
+      40,
+      32,
+    )
+
+    expect(parsed?.occurredAt).toBe('2026-10-11T00:57:55.000Z')
+  })
 })

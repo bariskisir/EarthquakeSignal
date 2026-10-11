@@ -12,6 +12,7 @@ const electronMocks = vi.hoisted(() => {
     public readonly handlers = new Map<string, () => void>()
     public readonly destroy = vi.fn()
     public readonly setContextMenu = vi.fn()
+    public readonly setToolTip = vi.fn()
 
     public on(event: string, listener: () => void): void {
       this.handlers.set(event, listener)

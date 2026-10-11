@@ -2,7 +2,13 @@
 
 import { createHash } from 'node:crypto'
 import type { Types } from '@eneris/push-receiver/dist/client'
-import { calculateDistanceKm, estimateEarthquakeNetworkIntensity } from '@shared/earthquake'
+import {
+  alignOccurredHourToReceived,
+  calculateDistanceKm,
+  EARTHQUAKE_NETWORK_TIME_ZONE,
+  estimateEarthquakeNetworkIntensity,
+  parseWallClockInTimeZone,
+} from '@shared/earthquake'
 import type { EarthquakeEvent } from '@shared/types'
 
 const ignoredMessageTypes = new Set(['manual', 'chat_public', 'chat_personal', 'friendship'])
@@ -70,6 +76,26 @@ const readDate = (data: Record<string, unknown>, keys: string[]): string | null 
         ? new Date(value)
         : null
     if (date && !Number.isNaN(date.getTime())) return date.toISOString()
+  }
+  return null
+}
+
+/**
+ * Resolves an official origin time from EQN's Rome-wall-clock naive strings.
+ *
+ * Seismic reports usually arrive through the FCM backlog replay hours after the
+ * quake, so aligning them to the received hour (as realtime does) would corrupt
+ * correct times. The server zone conversion is deterministic instead: it is right
+ * for promptly delivered and replayed reports alike. Returns null when no key
+ * holds a naive wall-clock string, letting the caller fall back to readDate for
+ * zoned ISO strings and numeric epochs.
+ */
+const readOfficialWallClock = (data: Record<string, unknown>, keys: string[]): string | null => {
+  for (const key of keys) {
+    const value = data[key]
+    if (typeof value !== 'string') continue
+    const zoned = parseWallClockInTimeZone(value, EARTHQUAKE_NETWORK_TIME_ZONE)
+    if (zoned) return zoned
   }
   return null
 }
@@ -175,7 +201,7 @@ export const parseEarthquakeEnvelope = (
     envelope.message.fcmMessageId ??
     envelope.persistentId
   const receivedAt = new Date().toISOString()
-  const occurredAt = readDate(data, [
+  const occurredAtKeys = [
     'occurredAt',
     'datetime',
     'date',
@@ -183,7 +209,12 @@ export const parseEarthquakeEnvelope = (
     'time',
     'data',
     'official_date_notification',
-  ])
+  ]
+  const rawOccurredAt = readDate(data, occurredAtKeys)
+  const occurredAt =
+    rawOccurredAt && kind === 'realtime'
+      ? alignOccurredHourToReceived(rawOccurredAt, receivedAt)
+      : (readOfficialWallClock(data, occurredAtKeys) ?? rawOccurredAt)
   const warning = readString(data, ['warning', 'message', 'official_reports_notification'])
 
   return {

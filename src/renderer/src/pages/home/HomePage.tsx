@@ -13,7 +13,7 @@ import EarthquakeOverviewMap from '@renderer/components/earthquake/EarthquakeOve
 import { useSessionActions } from '@renderer/hooks/useSessionActions'
 import { useAppSelector } from '@renderer/store'
 import { formatDate } from '@renderer/utils/formatters'
-import { getIntensityLabel } from '@shared/earthquake'
+import { getEarthquakeProducedAt, getIntensityLabel } from '@shared/earthquake'
 import styles from './HomePage.module.scss'
 
 /** Renders the primary application workspace. */
@@ -28,6 +28,7 @@ const HomePage = (): React.JSX.Element => {
   const { t } = useTranslation()
   const { openSession } = useSessionActions()
   const earthquake = session?.earthquake
+  const producedAt = getEarthquakeProducedAt(earthquake?.occurredAt, earthquake?.alertDelaySeconds)
   const filteredSessions = useMemo(
     () => filterSessionsByMagnitude(sessions, earthquakeFilter),
     [earthquakeFilter, sessions],
@@ -129,12 +130,27 @@ const HomePage = (): React.JSX.Element => {
               {earthquake.occurredAt && (
                 <div>
                   <dt>{t('earthquake.occurred')}</dt>
-                  <dd>{formatDate(earthquake.occurredAt, timeFormat)}</dd>
+                  <dd>
+                    {formatDate(earthquake.occurredAt, timeFormat)}
+                    <span className={styles.timeHint}>{t('earthquake.occurredHint')}</span>
+                  </dd>
+                </div>
+              )}
+              {producedAt && (
+                <div>
+                  <dt>{t('earthquake.produced')}</dt>
+                  <dd>
+                    {formatDate(producedAt, timeFormat)}
+                    <span className={styles.timeHint}>{t('earthquake.producedHint')}</span>
+                  </dd>
                 </div>
               )}
               <div>
                 <dt>{t('earthquake.received')}</dt>
-                <dd>{formatDate(earthquake.receivedAt, timeFormat)}</dd>
+                <dd>
+                  {formatDate(earthquake.receivedAt, timeFormat)}
+                  <span className={styles.timeHint}>{t('earthquake.receivedHint')}</span>
+                </dd>
               </div>
               <div>
                 <dt>{t('earthquake.source')}</dt>

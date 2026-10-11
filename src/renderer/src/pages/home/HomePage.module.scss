@@ -136,6 +136,13 @@
   }
 }
 
+.timeHint {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-3);
+  font-size: 11px;
+}
+
 .intensityLabel {
   display: inline-block;
   margin-left: 6px;

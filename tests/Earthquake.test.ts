@@ -3,14 +3,18 @@
 import { describe, expect, it } from 'vitest'
 import { createFirebaseTopicMembershipUrl } from '../src/main/earthquakeNetworkConfig'
 import {
+  alignOccurredHourToReceived,
   calculateDistanceKm,
   calculateDestinationCoordinates,
   calculateEarthquakeWaveState,
   createEarthquakeTileTopic,
   createEarthquakeTopics,
+  EARTHQUAKE_NETWORK_TIME_ZONE,
   estimateEarthquakeNetworkIntensity,
   getEarthquakeMarkerRadius,
+  getEarthquakeProducedAt,
   isWithinStartupAlertQuietPeriod,
+  parseWallClockInTimeZone,
   STARTUP_ALERT_QUIET_PERIOD_MS,
 } from '../src/shared/earthquake'
 
@@ -86,5 +90,43 @@ describe('earthquake utilities', () => {
       isWithinStartupAlertQuietPeriod(startedAt, startedAt + STARTUP_ALERT_QUIET_PERIOD_MS),
     ).toBe(false)
     expect(isWithinStartupAlertQuietPeriod(startedAt, startedAt + 61_000)).toBe(false)
+  })
+
+  it('pulls a timezone-naive occurred hour back to the received hour', () => {
+    expect(
+      alignOccurredHourToReceived('2026-10-11T17:08:30.000Z', '2026-10-11T14:09:00.000Z'),
+    ).toBe('2026-10-11T14:08:30.000Z')
+    expect(
+      alignOccurredHourToReceived('2026-10-11T14:08:30.000Z', '2026-10-11T14:09:00.000Z'),
+    ).toBe('2026-10-11T14:08:30.000Z')
+    expect(
+      alignOccurredHourToReceived('2026-10-12T01:05:00.000Z', '2026-10-11T23:06:00.000Z'),
+    ).toBe('2026-10-11T23:05:00.000Z')
+  })
+
+  it('derives the EQN alert production time from the origin and the alert delay', () => {
+    expect(getEarthquakeProducedAt('2026-10-11T14:08:30.000Z', 4)).toBe('2026-10-11T14:08:34.000Z')
+    expect(getEarthquakeProducedAt(undefined, 4)).toBeUndefined()
+    expect(getEarthquakeProducedAt('2026-10-11T14:08:30.000Z', undefined)).toBeUndefined()
+    expect(getEarthquakeProducedAt('not-a-date', 4)).toBeUndefined()
+  })
+
+  it('converts EQN Rome wall-clock strings to UTC across DST', () => {
+    expect(EARTHQUAKE_NETWORK_TIME_ZONE).toBe('Europe/Rome')
+    expect(parseWallClockInTimeZone('2026-10-11 02:14:04', EARTHQUAKE_NETWORK_TIME_ZONE)).toBe(
+      '2026-10-11T00:14:04.000Z',
+    )
+    expect(parseWallClockInTimeZone('2026-10-11T02:14:04', EARTHQUAKE_NETWORK_TIME_ZONE)).toBe(
+      '2026-10-11T00:14:04.000Z',
+    )
+    expect(parseWallClockInTimeZone('2026-01-15 12:00:00', EARTHQUAKE_NETWORK_TIME_ZONE)).toBe(
+      '2026-01-15T11:00:00.000Z',
+    )
+    expect(parseWallClockInTimeZone('2026-07-28T13:00:00.000Z', EARTHQUAKE_NETWORK_TIME_ZONE)).toBe(
+      null,
+    )
+    expect(parseWallClockInTimeZone('not-a-date', EARTHQUAKE_NETWORK_TIME_ZONE)).toBe(null)
+    expect(parseWallClockInTimeZone('', EARTHQUAKE_NETWORK_TIME_ZONE)).toBe(null)
+    expect(parseWallClockInTimeZone('2026-13-40 99:99:99', EARTHQUAKE_NETWORK_TIME_ZONE)).toBe(null)
   })
 })

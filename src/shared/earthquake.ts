@@ -111,6 +111,107 @@ export const isWithinStartupAlertQuietPeriod = (
   nowMs: number = Date.now(),
 ): boolean => nowMs - startedAtMs < STARTUP_ALERT_QUIET_PERIOD_MS
 
+/**
+ * IANA zone of the Earthquake Network server clock used for official report times.
+ *
+ * EQN forwards official (EMSC/BDTIM/INGV) origin times as timezone-naive wall-clock
+ * strings such as "2026-10-11 02:14:04" in its own server zone. E.g. the M3.6 Kayseri
+ * quake arrived as "02:14:04" while Kandilli lists 03:14:02 TRT, i.e. 00:14:04Z —
+ * exactly the Rome wall clock read as UTC.
+ */
+export const EARTHQUAKE_NETWORK_TIME_ZONE = 'Europe/Rome'
+
+const wallClockPattern = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?$/
+
+/** Returns the IANA-zone offset in milliseconds for one instant. */
+const getTimeZoneOffsetMs = (instant: Date, timeZone: string): number => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+    .formatToParts(instant)
+    .reduce<Record<string, string>>((accumulator, part) => {
+      accumulator[part.type] = part.value
+      return accumulator
+    }, {})
+  const asUtcMs = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour) % 24,
+    Number(parts.minute),
+    Number(parts.second),
+  )
+  return asUtcMs - instant.getTime()
+}
+
+/**
+ * Converts a timezone-naive "YYYY-MM-DD HH:mm:ss" wall-clock string from the given
+ * IANA zone to an ISO UTC instant. Returns null for anything else (zoned ISO
+ * strings, epochs, unparseable values) so callers can fall back to default parsing.
+ * The zone offset is iterated to a fixed point, so DST transitions resolve correctly.
+ */
+export const parseWallClockInTimeZone = (value: string, timeZone: string): string | null => {
+  const match = wallClockPattern.exec(value.trim())
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const hour = Number(match[4])
+  const minute = Number(match[5])
+  const second = Number(match[6] ?? '0')
+  if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || minute > 59 || second > 59) {
+    return null
+  }
+  const wallAsUtcMs = Date.UTC(year, month - 1, day, hour, minute, second)
+  let instantMs = wallAsUtcMs
+  for (let iteration = 0; iteration < 3; iteration += 1) {
+    const next = wallAsUtcMs - getTimeZoneOffsetMs(new Date(instantMs), timeZone)
+    if (next === instantMs) break
+    instantMs = next
+  }
+  return new Date(instantMs).toISOString()
+}
+
+/**
+ * EQN sends a timezone-naive wall-clock time that looks hours ahead when read as UTC.
+ * Pull the occurred hour back to the received hour, keeping minutes/seconds.
+ * E.g. received 14:09 + occurred 17:08 -> 14:08.
+ * Leave small gaps (<30min) alone so hour boundaries stay intact.
+ * Applies the nearest whole-hour shift, so midnight rollover is handled.
+ */
+export const alignOccurredHourToReceived = (occurredAt: string, receivedAt: string): string => {
+  const occurred = new Date(occurredAt)
+  const received = new Date(receivedAt)
+  if (Number.isNaN(occurred.getTime()) || Number.isNaN(received.getTime())) return occurredAt
+  const diffMs = occurred.getTime() - received.getTime()
+  if (Math.abs(diffMs) < 30 * 60_000) return occurredAt
+  const hourShift = Math.round(diffMs / 3_600_000)
+  if (hourShift === 0) return occurredAt
+  return new Date(occurred.getTime() - hourShift * 3_600_000).toISOString()
+}
+
+/**
+ * Derives the EQN alert production time from the quake origin and the alert delay.
+ * Returns undefined when either input is missing or unparseable, mirroring the
+ * Telegram bot formatter which shows no production row in that case.
+ */
+export const getEarthquakeProducedAt = (
+  occurredAt: string | undefined,
+  alertDelaySeconds: number | undefined,
+): string | undefined => {
+  if (occurredAt === undefined || alertDelaySeconds === undefined) return undefined
+  const occurredMs = Date.parse(occurredAt)
+  if (!Number.isFinite(occurredMs)) return undefined
+  return new Date(occurredMs + Math.max(0, alertDelaySeconds) * 1_000).toISOString()
+}
+
 /** Returns a progressively larger Leaflet marker radius for stronger earthquakes. */
 export const getEarthquakeMarkerRadius = (magnitude: number | undefined): number => {
   if (magnitude === undefined || magnitude < 4) return 5
