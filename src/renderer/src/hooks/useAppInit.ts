@@ -18,7 +18,7 @@ import {
   setSessionsSidebarOpen,
   setUpdateState,
 } from '@renderer/store/appSlice'
-import { useAppDispatch } from '@renderer/store'
+import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { toSessionSummary } from '@renderer/utils/formatters'
 
 const logger = createLogger('AppInit')
@@ -26,12 +26,21 @@ const logger = createLogger('AppInit')
 /** Loads persisted state and maintains typed IPC subscriptions for the app lifetime. */
 export const useAppInit = (): void => {
   const dispatch = useAppDispatch()
+  const initialized = useAppSelector((state) => state.app.initialized)
+  const sessionsSidebarOpen = useAppSelector((state) => state.app.sessionsSidebarOpen)
   const { message } = AntdApp.useApp()
   const messageRef = useRef(message)
 
   useEffect(() => {
     messageRef.current = message
   }, [message])
+
+  useEffect(() => {
+    if (!initialized) return
+    void window.app
+      .setSidebarState({ open: sessionsSidebarOpen })
+      .catch((error: unknown) => logger.warn('Sidebar state could not be persisted.', error))
+  }, [initialized, sessionsSidebarOpen])
 
   useEffect(() => {
     let active = true

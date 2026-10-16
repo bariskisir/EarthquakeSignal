@@ -9,6 +9,7 @@ import type {
   EarthquakeReceivedEvent,
   EarthquakeServiceStatus,
   EarthquakeSignalApi,
+  SidebarState,
   UpdateStateEvent,
 } from '@shared/types'
 
@@ -42,6 +43,9 @@ const api: EarthquakeSignalApi = {
   closeWindow: () => ipcRenderer.invoke(IpcChannel.WindowClose),
   /** Retrieves the main application window's maximized state. */
   isWindowMaximized: () => ipcRenderer.invoke(IpcChannel.WindowIsMaximized),
+  /** Persists the session sidebar collapse state with window geometry. */
+  setSidebarState: (state: SidebarState) =>
+    ipcRenderer.invoke(IpcChannel.WindowSidebarStateSet, state),
   /** Synchronizes native title-bar colors with the renderer theme. */
   setTheme: (theme) => ipcRenderer.invoke(IpcChannel.ThemeSet, theme),
   /** Opens one allow-listed HTTPS URL in the system browser. */

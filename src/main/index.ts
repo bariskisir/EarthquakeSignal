@@ -137,7 +137,7 @@ const openApplicationWindow = async (startHidden = false): Promise<void> => {
     event.preventDefault()
     window.hide()
   })
-  registerIpc(window, { storage, tray, updater, logger, earthquake })
+  registerIpc(window, { storage, tray, updater, logger, earthquake, windowService })
   if (initialNotificationActivation) {
     setTimeout(() => earthquake.openNotification(initialNotificationActivation.sessionId), 750)
   }

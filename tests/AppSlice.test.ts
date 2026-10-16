@@ -26,27 +26,40 @@ const session = (id: string, title = 'New Session'): SessionDocument => ({
   updatedAt: '2026-01-01T00:00:00.000Z',
 })
 
+/** Creates a minimal deterministic bootstrap payload for reducer tests. */
+const bootstrap = (overrides: Partial<BootstrapPayload> = {}): BootstrapPayload => ({
+  settings: { ...DEFAULT_SETTINGS, theme: 'light' },
+  sessions: [session('00000000-0000-4000-8000-000000000001')],
+  currentSession: session('00000000-0000-4000-8000-000000000001'),
+  sidebar: null,
+  platform: 'linux',
+  version: '1.0.0',
+  earthquakeStatus: {
+    state: 'connected',
+    topics: ['global', 'x21y12'],
+    subscribedTopics: ['global', 'x21y12'],
+  },
+  ...overrides,
+})
+
 describe('appSlice', () => {
   it('hydrates application state once', () => {
-    const payload: BootstrapPayload = {
-      settings: { ...DEFAULT_SETTINGS, theme: 'light' },
-      sessions: [session('00000000-0000-4000-8000-000000000001')],
-      currentSession: session('00000000-0000-4000-8000-000000000001'),
-      platform: 'linux',
-      version: '1.0.0',
-      earthquakeStatus: {
-        state: 'connected',
-        topics: ['global', 'x21y12'],
-        subscribedTopics: ['global', 'x21y12'],
-      },
-    }
+    const payload = bootstrap({ sidebar: { open: false } })
     const hydrated = reducer(undefined, hydrate(payload))
-    const repeated = reducer(hydrated, hydrate({ ...payload, version: '2.0.0' }))
+    const repeated = reducer(hydrated, hydrate(bootstrap({ version: '2.0.0' })))
 
     expect(hydrated.initialized).toBe(true)
     expect(hydrated.settings.theme).toBe('light')
     expect(hydrated.version).toBe('1.0.0')
+    expect(hydrated.sessionsSidebarOpen).toBe(false)
     expect(repeated.version).toBe('1.0.0')
+    expect(repeated.sessionsSidebarOpen).toBe(false)
+  })
+
+  it('keeps the default sidebar state when no window state was persisted', () => {
+    const hydrated = reducer(undefined, hydrate(bootstrap()))
+
+    expect(hydrated.sessionsSidebarOpen).toBe(true)
   })
 
   it('changes page and settings section', () => {

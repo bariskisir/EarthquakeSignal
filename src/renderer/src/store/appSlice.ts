@@ -66,6 +66,9 @@ const appSlice = createSlice({
       state.currentSession = action.payload.currentSession
       state.earthquakeStatus = action.payload.earthquakeStatus
       state.earthquakeFilter = action.payload.settings.earthquakeFilter
+      if (action.payload.sidebar) {
+        state.sessionsSidebarOpen = action.payload.sidebar.open
+      }
     },
     /** Opens a top-level application page. */
     setPage(state, action: PayloadAction<AppPage>) {

@@ -157,10 +157,17 @@ export interface SessionSummary {
   occurredAt?: string | undefined
 }
 
+/** Stores the session sidebar collapse state persisted with window geometry. */
+export interface SidebarState {
+  /** Whether the session sidebar is expanded. */
+  open: boolean
+}
+
 export interface BootstrapPayload {
   settings: AppSettings
   sessions: SessionSummary[]
   currentSession: SessionDocument | null
+  sidebar: SidebarState | null
   platform: DesktopPlatform
   version: string
   earthquakeStatus: EarthquakeServiceStatus
@@ -248,6 +255,8 @@ export interface EarthquakeSignalApi {
   closeWindow(): Promise<void>
   /** Reports whether the main application window is maximized. */
   isWindowMaximized(): Promise<boolean>
+  /** Persists the session sidebar collapse state with window geometry. */
+  setSidebarState(state: SidebarState): Promise<void>
   /** Synchronizes native window chrome with the resolved renderer theme. */
   setTheme(theme: Exclude<ThemeMode, 'system'>): Promise<void>
   /** Opens an allow-listed URL in the system browser. */

@@ -20,6 +20,7 @@ import type EarthquakeService from './services/EarthquakeService'
 import type LoggerService from './services/LoggerService'
 import type StorageService from './services/StorageService'
 import type TrayService from './services/TrayService'
+import type WindowService from './services/WindowService'
 
 const sessionIdSchema = z.uuid()
 const sessionRenameSchema = z.object({
@@ -34,6 +35,9 @@ const rendererLogSchema = z.object({
 })
 const earthquakeTestKindSchema = z.enum(['realtime', 'seismic-network'])
 const earthquakeFilterSchema = z.enum(['all', '3', '4', '5'])
+const sidebarStateSchema = z.object({
+  open: z.boolean(),
+})
 
 const TRUSTED_EXTERNAL_ORIGINS = new Set(['https://github.com', APP_AUTHOR_URL])
 
@@ -43,6 +47,7 @@ interface IpcServices {
   updater: AppUpdater
   logger: LoggerService
   earthquake: EarthquakeService
+  windowService: WindowService
 }
 
 /** Removes previous handlers before a replacement window is attached. */
@@ -91,6 +96,7 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
       settings,
       sessions,
       currentSession: null,
+      sidebar: services.windowService.getSidebarState(),
       platform: process.platform,
       version: app.getVersion(),
       earthquakeStatus: services.earthquake.getStatus(),
@@ -156,6 +162,10 @@ export const registerIpc = (window: BrowserWindow, services: IpcServices): void 
   ipcMain.handle(IpcChannel.WindowIsMaximized, (event) => {
     assertSender(event.sender)
     return window.isMaximized()
+  })
+  ipcMain.handle(IpcChannel.WindowSidebarStateSet, (event, input: unknown) => {
+    assertSender(event.sender)
+    services.windowService.setSidebarState(sidebarStateSchema.parse(input))
   })
   ipcMain.handle(IpcChannel.ThemeSet, (event, theme: unknown) => {
     assertSender(event.sender)
